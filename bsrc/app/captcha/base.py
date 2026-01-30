@@ -39,14 +39,21 @@ class BaseCaptcha(ABC):
         pass
 
     @abstractmethod
-    def generate(self, mol_path: str) -> dict:
+    def generate_img(self) -> dict:
         """
         生成验证码
-        :param mol_path: mol文件的绝对路径
         :return: {
             "img_base64": "...",
-            "answer_data": { ... }
+            "size": { ... }
         }
+        """
+        pass
+
+    @abstractmethod
+    def generate_answer(self) -> list:
+        """
+        生成答案
+        :return: list[答案]
         """
         pass
 
@@ -55,14 +62,6 @@ class BaseCaptcha(ABC):
         """验证逻辑"""
         pass
 
-    # @abstractmethod
-    # def is_eligible(self, mol: Chem.Mol) -> bool:
-    #     """
-    #     判断一个 RDKit 分子对象是否符合该插件的要求
-    #     :param mol: 已经解析好的 RDKit Mol 对象
-    #     :return: True (我要存这个分子) / False (我不感兴趣)
-    #     """
-    #     pass
 
     @abstractmethod
     def get_metadata(self, mol: Chem.Mol) -> Optional[Dict[str, Any]]:

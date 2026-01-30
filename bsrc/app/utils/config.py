@@ -1,5 +1,9 @@
 import os
 
+# 设置
+NOISE_MODE = True  # 启用噪声模式
+
+
 # 路径配置
 CURRENT_DIR = os.path.dirname(__file__)
 MOL_DIR = os.path.join(CURRENT_DIR, "..", "..", "data", "mol")

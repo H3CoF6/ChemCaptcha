@@ -8,6 +8,12 @@ class AromaticCaptcha(BaseCaptcha):
     slug = "aromatic"
     table_name = "aromatic"
 
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+        self.mol_path = get_random_line_by_table_name(table_name="aromatic")
+        self.rdkit_object = construct_rdkit(self.mol_path)
+
     def get_table_schema(self) -> str:
         """
         定义芳香环专用的元数据表
@@ -15,11 +21,17 @@ class AromaticCaptcha(BaseCaptcha):
         """
         return db_init(self.table_name)
 
-    def generate(self, mol_path: str) -> dict:
+    def generate_img(self) -> dict:
         """
-        核心生成逻辑：读取Mol -> 绘图 -> 计算芳香环坐标 -> 返回结果
+        核心生成逻辑：读取Mol -> 绘图 -> 返回结果
         """
-        return generate_func(mol_path)
+        return base_draw(self.rdkit_object, width=self.width, height=self.height)
+
+    def generate_answer(self) -> list:
+        """
+        生成对应的答案
+        """
+        return generate_answer(self.rdkit_object, width=self.width, height=self.height)
 
 
     def verify(self, answer_data: dict, user_input: Any) -> bool:
