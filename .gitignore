@@ -4,3 +4,4 @@ node_moudles/
 .idea/
 venv/
 data/
+__pycache__/

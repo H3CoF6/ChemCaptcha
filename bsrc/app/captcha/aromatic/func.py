@@ -1,0 +1,83 @@
+import os
+from app.utils.logger import logger
+from app.utils.exceptions import CaptchaException
+import base64
+from rdkit import Chem
+from rdkit.Chem.Draw import rdMolDraw2D
+
+def generate_func(mol_path: str) -> dict:
+    if not os.path.exists(mol_path):
+        logger.error(f"Mol file not found: {mol_path}")
+        raise CaptchaException(f"Mol file not found: {mol_path}")
+
+    try:
+        with open(mol_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+
+        if len(lines) > 2 and "V2000" in lines[2]:
+            lines.insert(2, "\n")
+
+        mol_block = "".join(lines)
+        mol = Chem.MolFromMolBlock(mol_block)
+
+        if not mol:
+            raise CaptchaException("RDKit failed to parse mol block")
+
+        Chem.SanitizeMol(mol)
+
+    except Exception as e:
+        logger.error(f"Error parsing mol file {mol_path}: {e}")
+        raise
+
+    img_width, img_height = 400, 300
+    d2d = rdMolDraw2D.MolDraw2DCairo(img_width, img_height)
+
+    # 不是形参，是self类型的注释！！！
+    # noinspection PyArgumentList
+    d2d.drawOptions().addAtomIndices = False
+    # noinspection PyArgumentList
+    d2d.drawOptions().clearBackground = False
+
+    d2d.DrawMolecule(mol)
+    ri = mol.GetRingInfo()
+    valid_boxes = []
+
+    for ring_atom_indices in ri.AtomRings():
+        is_aromatic = True
+        for idx in ring_atom_indices:
+            if not mol.GetAtomWithIdx(idx).GetIsAromatic():
+                is_aromatic = False
+                break
+
+        if is_aromatic:
+            xs, ys = [], []
+            for atom_idx in ring_atom_indices:
+                p = d2d.GetDrawCoords(atom_idx)
+                xs.append(p.x)
+                ys.append(p.y)
+
+            padding = 20
+            box = [
+                min(xs) - padding,
+                min(ys) - padding,
+                max(xs) + padding,
+                max(ys) + padding
+            ]
+            valid_boxes.append(box)
+
+    # noinspection PyArgumentList
+    d2d.FinishDrawing()
+
+    # noinspection PyArgumentList
+    png_data = d2d.GetDrawingText()
+    img_base64 = base64.b64encode(png_data).decode('utf-8')
+
+    return {
+        "img_base64": f"data:image/png;base64,{img_base64}",
+        "answer_data": {
+            "boxes": valid_boxes,
+            "mol_path": mol_path,
+            "width": img_width,
+            "height": img_height
+        }
+    }
