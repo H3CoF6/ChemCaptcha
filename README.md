@@ -7,3 +7,9 @@
 - [ ] 手性碳
 - [ ] 芳香环
 - [ ] 顺反异构
+
+
+
+https://ftp.ncbi.nlm.nih.gov/pubchem/Compound/CURRENT-Full/SDF/Compound_000000001_000500000.sdf.gz
+
+https://ftp.ncbi.nlm.nih.gov/pubchem/Compound/CURRENT-Full/SDF/Compound_000500001_001000000.sdf.gz
