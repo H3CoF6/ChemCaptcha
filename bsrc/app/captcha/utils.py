@@ -1,5 +1,6 @@
 from typing import Any
 from app.utils.logger import logger
+import app.utils.database as db
 
 def base_verify(user_input:Any,answer_data:dict):
     """点击区域的验证函数"""
@@ -19,3 +20,7 @@ def base_verify(user_input:Any,answer_data:dict):
 
     logger.info(f"Verify Failed: ({x}, {y}) missed all boxes")
     return False
+
+def get_random_line_by_table_name(table_name: str) -> Any:
+    """获取数据库中，随机的 相应验证码"""
+    return db.get_random_line(table_name)

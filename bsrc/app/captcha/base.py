@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Type, ClassVar
+from typing import Dict, Any, Type, ClassVar, Optional
 from app.utils.logger import logger
+from rdkit import Chem
 from app.utils.exceptions import PluginException
 
 
@@ -52,4 +53,24 @@ class BaseCaptcha(ABC):
     @abstractmethod
     def verify(self, answer_data: dict, user_input: Any) -> bool:
         """验证逻辑"""
+        pass
+
+    # @abstractmethod
+    # def is_eligible(self, mol: Chem.Mol) -> bool:
+    #     """
+    #     判断一个 RDKit 分子对象是否符合该插件的要求
+    #     :param mol: 已经解析好的 RDKit Mol 对象
+    #     :return: True (我要存这个分子) / False (我不感兴趣)
+    #     """
+    #     pass
+
+    @abstractmethod
+    def get_metadata(self, mol: Chem.Mol) -> Optional[Dict[str, Any]]:
+        """
+        :param mol: RDKit 分子对象
+        :return: 一个字典，包含该插件特有的字段数据。如果返回 None，表示该分子不符合入库要求。
+
+        例子: 芳香环插件返回 -> {"has_aromatic": True, "ring_count": 3}
+              手性碳插件返回 -> {"chiral_count": 2}
+        """
         pass

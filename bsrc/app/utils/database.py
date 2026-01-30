@@ -87,3 +87,23 @@ def get_random_line(table_name: str) -> Optional[Dict[str, Any]]:
         logger.error(f"Error getting random line from {table_name}: {e}")
 
     return data
+
+
+def eval_sql(db_path:str, sql_cmd:str) -> Any:
+    try:
+        with get_conn(db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+
+            cursor.execute(sql_cmd)
+
+            data = cursor.fetchall()
+            if data:
+                return data
+
+            return None
+
+    except Exception as e:
+        logger.error(f"Error eval sql: {sql_cmd}: {e}")
+        raise DataBaseException(f"Error eval sql: {sql_cmd}: {e}")
+

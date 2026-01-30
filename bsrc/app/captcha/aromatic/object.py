@@ -28,3 +28,6 @@ class AromaticCaptcha(BaseCaptcha):
         user_input: {"x": 123, "y": 456}
         """
         return base_verify(user_input=user_input, answer_data=answer_data) # 显式
+
+    def get_metadata(self, mol: Chem.Mol) -> bool:
+        return get_mol_value(mol)

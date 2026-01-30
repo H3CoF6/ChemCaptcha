@@ -5,7 +5,7 @@ import base64
 from rdkit import Chem
 from rdkit.Chem.Draw import rdMolDraw2D
 
-def generate_func(mol_path: str) -> dict:
+def generate_func(mol_path: str, width: int = 400, height: int = 300) -> dict:
     if not os.path.exists(mol_path):
         logger.error(f"Mol file not found: {mol_path}")
         raise CaptchaException(f"Mol file not found: {mol_path}")
@@ -29,8 +29,7 @@ def generate_func(mol_path: str) -> dict:
         logger.error(f"Error parsing mol file {mol_path}: {e}")
         raise
 
-    img_width, img_height = 400, 300
-    d2d = rdMolDraw2D.MolDraw2DCairo(img_width, img_height)
+    d2d = rdMolDraw2D.MolDraw2DCairo(width, height)
 
     # 不是形参，是self类型的注释！！！
     # noinspection PyArgumentList
@@ -77,7 +76,21 @@ def generate_func(mol_path: str) -> dict:
         "answer_data": {
             "boxes": valid_boxes,
             "mol_path": mol_path,
-            "width": img_width,
-            "height": img_height
+            "width": width,
+            "height": height
         }
     }
+
+# def judge_mol_file(mol: Chem.Mol):
+#     """
+#     筛选逻辑：只要分子里包含至少一个芳香环，我就要。
+#     """
+#     try:
+#         ri = mol.GetRingInfo()
+#         for ring in ri.AtomRings():
+#             if all(mol.GetAtomWithIdx(idx).GetIsAromatic() for idx in ring):
+#                 return True
+#         return False
+#     except Exception as e:
+#         logger.error(f"Exception when judge mol file: {e}")
+#         return False
