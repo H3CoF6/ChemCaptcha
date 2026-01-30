@@ -15,3 +15,11 @@ FILE_LOG_LEVEL = "DEBUG"
 # 不要用这么蠢的密码！！
 AES_KEY = "1234567890987654"
 AES_IV = "9876543210123456"
+
+def count_files_fast(path):
+    count = 0
+    with os.scandir(path) as it:
+        for entry in it:
+            if entry.is_file():  # 只计算文件，排除子文件夹
+                count += 1
+    return count

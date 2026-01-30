@@ -8,8 +8,21 @@ from contextlib import contextmanager
 
 @contextmanager
 def get_conn(db_file):
-    conn = sqlite3.connect(db_file)
-    return conn
+    target_path = db_file
+    if not target_path:
+        target_path = getattr(config, 'MOL_DB_PATH', None)
+
+    if not target_path:
+        raise DataBaseException("❌ Database path is None! Please check app/utils/config.py")
+    conn = sqlite3.connect(target_path, check_same_thread=False)
+
+    try:
+        yield conn
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        conn.close()
 
 def insert_mol_database(table_name, data_source: Union[Dict, List[Dict]] = None, **kwargs):
     if data_source is None:

@@ -16,6 +16,14 @@ TIMEOUT_SECONDS = 3.0
 
 console = Console()
 
+def count_files_fast(path):
+    count = 0
+    with os.scandir(path) as it:
+        for entry in it:
+            if entry.is_file():
+                count += 1
+    return count
+
 def init_tables(plugins):
     """
     初始化所有插件的数据库表
@@ -33,17 +41,43 @@ def init_tables(plugins):
     console.print("[bold cyan]-----------------------------------[/]")
 
 
-def classify_runner(mol_dir = MOL_DIR):
-    # 1. 加载插件
+def find_next_available_index(mol_dir, current_index):
+    """
+    当找不到 current_index 时，扫描目录寻找比它大的最小序号
+    """
+    try:
+        files = os.listdir(mol_dir)
+        existing_ids = []
+        for f in files:
+            if f.endswith(".mol"):
+                name_part = f[:-4]
+                if name_part.isdigit():
+                    existing_ids.append(int(name_part))
+
+        if not existing_ids:
+            return None
+
+        existing_ids.sort()
+
+        for idx in existing_ids:
+            if idx > current_index:
+                return idx
+
+        return None
+    except Exception as e:
+        logger.warning(f"find big id file error:{e}")
+        return None
+
+
+def classify_runner(mol_dir=MOL_DIR):
+
     plugins = [cls() for cls in PLUGINS.values()]
     if not plugins:
         console.print("[bold red]❌ No plugins found![/]")
         return
 
-    # 2. 【关键步骤】初始化数据库表
     init_tables(plugins)
 
-    # 3. 准备 UI
     layout = Layout()
     layout.split(
         Layout(name="header", size=3),
@@ -55,7 +89,6 @@ def classify_runner(mol_dir = MOL_DIR):
     total_processed = 0
     current_index = 1
 
-    # 进度条配置
     job_progress = Progress(
         "{task.description}",
         SpinnerColumn(),
@@ -78,7 +111,8 @@ def classify_runner(mol_dir = MOL_DIR):
     layout["main"].update(generate_table())
     layout["footer"].update(Panel(job_progress))
 
-    # 4. 开始监听文件
+    count = count_files_fast(mol_dir)
+
     with Live(layout, refresh_per_second=4, console=console):
         last_found_time = time.time()
 
@@ -86,15 +120,16 @@ def classify_runner(mol_dir = MOL_DIR):
             filename = f"{current_index}.mol"
             file_path = os.path.join(mol_dir, filename)
 
+            if current_index % 1000 == 0:
+                count = count_files_fast(mol_dir)
+
             if os.path.exists(file_path):
                 last_found_time = time.time()
 
                 try:
-                    # 尝试读取
                     mol = Chem.MolFromMolFile(file_path)
+
                     if not mol:
-                        # 可能是文件还在写入中，或者是坏文件
-                        # 稍微等一下再试一次
                         time.sleep(0.01)
                         mol = Chem.MolFromMolFile(file_path)
 
@@ -102,10 +137,10 @@ def classify_runner(mol_dir = MOL_DIR):
                         try:
                             Chem.SanitizeMol(mol)
                         except Exception as e:
+
                             logger.warning(f"[error] error file fmt:{e}")
                             pass
 
-                        # 遍历插件提取数据
                         for plugin in plugins:
                             try:
                                 metadata = plugin.get_metadata(mol)
@@ -118,14 +153,13 @@ def classify_runner(mol_dir = MOL_DIR):
                                     insert_mol_database(plugin.table_name, row_data)
                                     stats[plugin.slug] += 1
                             except Exception as e:
-                                # 捕获插件内部逻辑错误（比如 super() 写错）
                                 console.print(f"[red]Plugin error ({plugin.slug}) on {filename}: {e}[/]")
 
                     total_processed += 1
                     current_index += 1
 
-                    job_progress.update(task_id, completed=total_processed, description=f"[green]Processing {filename}")
-                    if total_processed % 5 == 0:
+                    job_progress.update(task_id, completed=total_processed,total= count ,description=f"[green]Processing {filename}")
+                    if total_processed % 10 == 0:  # 稍微降低一下刷新频率
                         layout["main"].update(generate_table())
 
                 except Exception as e:
@@ -133,6 +167,18 @@ def classify_runner(mol_dir = MOL_DIR):
                     current_index += 1
 
             else:
+                next_index = find_next_available_index(mol_dir, current_index)
+
+                if next_index:
+
+                    msg = f"⚠️ Gap detected! Jumping from {current_index} to {next_index}"
+                    # layout["header"].update(Panel(msg, style="yellow"))
+                    logger.debug(msg)
+
+                    current_index = next_index
+                    last_found_time = time.time()
+                    continue
+
                 elapsed = time.time() - last_found_time
                 layout["header"].update(
                     Panel(f"Waiting for [yellow]{filename}[/]... (Timeout: {TIMEOUT_SECONDS - elapsed:.1f}s)",
@@ -144,7 +190,7 @@ def classify_runner(mol_dir = MOL_DIR):
                     job_progress.update(task_id, description="[bold red]Done")
                     break
 
-                time.sleep(0.1)
+                time.sleep(0.2)
 
     console.print("\n[bold]🎉 Final Report:[/]")
     console.print(generate_table())
@@ -152,7 +198,6 @@ def classify_runner(mol_dir = MOL_DIR):
 
 if __name__ == "__main__":
     if not os.path.exists(MOL_DIR):
-        # 如果目录不存在，尝试创建（防止报错）
         os.makedirs(MOL_DIR, exist_ok=True)
         console.print(f"[yellow]Created directory {MOL_DIR}[/]")
 
