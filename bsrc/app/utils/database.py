@@ -54,7 +54,7 @@ def insert_mol_database(table_name, data_source: Union[Dict, List[Dict]] = None,
 
     except Exception as e:
         logger.error(f"存入mol数据库发生异常: {str(e)}")
-        raise DataBaseException(f"Exception when inserting {table_name}: {e}")
+        # raise DataBaseException(f"Exception when inserting {table_name}: {e}")
 
 
 def get_random_line(table_name: str) -> Optional[Dict[str, Any]]:
@@ -89,21 +89,31 @@ def get_random_line(table_name: str) -> Optional[Dict[str, Any]]:
     return data
 
 
-def eval_sql(db_path:str, sql_cmd:str) -> Any:
+def exec_sql(sql_cmd: str, db_path: str = config.MOL_DB_PATH):
+    """
+    用于执行 CREATE TABLE, UPDATE, DELETE 等需要 commit 的语句
+    """
+    try:
+        with get_conn(db_path) as conn:
+            cursor = conn.cursor()
+            cursor.executescript(sql_cmd)
+            conn.commit()
+            logger.debug(f"Executed SQL successfully")
+    except Exception as e:
+        logger.error(f"Error executing SQL: {e}")
+        raise DataBaseException(f"SQL execution failed: {e}")
+
+def eval_sql(sql_cmd: str, db_path: str = config.MOL_DB_PATH) -> Optional[List[Any]]:
+    """
+    用于查询 SELECT，返回数据
+    """
     try:
         with get_conn(db_path) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-
             cursor.execute(sql_cmd)
-
-            data = cursor.fetchall()
-            if data:
-                return data
-
-            return None
-
+            return cursor.fetchall()
     except Exception as e:
-        logger.error(f"Error eval sql: {sql_cmd}: {e}")
-        raise DataBaseException(f"Error eval sql: {sql_cmd}: {e}")
+        logger.error(f"Error eval SQL: {e}")
+        return None
 

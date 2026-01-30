@@ -1,7 +1,7 @@
 
 class BaseExceptions(Exception):
     def __init__(self, message):
-        super(Exception).__init__(message)
+        super().__init__(message)
 
 class DataBaseException(BaseExceptions):
     """数据库异常"""
