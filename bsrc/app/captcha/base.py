@@ -58,6 +58,15 @@ class BaseCaptcha(ABC):
         pass
 
     @abstractmethod
+    def generate_read_output(self) -> str:
+        """
+        生成人类可读的题目文字描述
+        :return: str 描述
+        """
+        pass
+
+
+    @abstractmethod
     def verify(self, answer_data: dict, user_input: Any) -> bool:
         """验证逻辑"""
         pass
@@ -73,3 +82,54 @@ class BaseCaptcha(ABC):
               手性碳插件返回 -> {"chiral_count": 2}
         """
         pass
+
+
+
+class BaseOptions(ABC):
+    """
+    验证码插件的选项，例如：点击所有可能的（非醛基的）氢键供体
+    """
+    _registry: Dict[str, Type['BaseOptions']] = {}
+    slug: ClassVar[str]
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+
+        if cls.__name__ == 'BaseOptions':
+            return
+
+        if not hasattr(cls, 'slug') or not isinstance(cls.slug, str):
+            raise PluginException(f"Class {cls.__name__} must define a string attribute 'slug'")
+
+        if cls.slug in cls._registry:
+            raise PluginException(f"Options slug '{cls.slug}' already registered!")
+
+        cls._registry[cls.slug] = cls
+        logger.info(f"[Plugin Options Registered]: {cls.slug} -> {cls.__name__}")
+
+    @classmethod
+    def get_plugins_options(cls):
+        return cls._registry
+
+
+    @abstractmethod
+    def get_random_options(self):
+        """
+        获取随机的选项
+        """
+        pass
+
+    @abstractmethod
+    def check_all_options(self):
+        """
+        检查全部的可用选项
+        """
+        pass
+
+    @abstractmethod
+    def get_options(self):
+        """
+        获取当前的选项配置
+        """
+        pass
+

@@ -2,6 +2,13 @@ import os
 
 # 设置
 NOISE_MODE = True  # 启用噪声模式
+DEV_MOD = True   # 开发模式，demo路由的注册
+
+# AES加解密  不需要环境变量，只是略微增加前端逆向难度
+# 不要用这么蠢的密码！！
+AES_KEY = "1234567890987654"
+
+FONT_NAME = "ComicNeue-Bold.ttf" # 不启用则留空
 
 
 # 路径配置
@@ -16,8 +23,3 @@ FONT_DIR = os.path.join(CURRENT_DIR, "..", "..", "data", "fonts")
 TERMINAL_LOG_LEVEL = "INFO"
 FILE_LOG_LEVEL = "DEBUG"
 
-# AES加解密  不需要环境变量，只是略微增加前端逆向难度
-# 不要用这么蠢的密码！！
-AES_KEY = "1234567890987654"
-
-FONT_NAME = "ComicNeue-Bold.ttf" # 不启用则留空

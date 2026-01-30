@@ -33,6 +33,10 @@ class AromaticCaptcha(BaseCaptcha):
         """
         return generate_answer(self.rdkit_object, width=self.width, height=self.height)
 
+    def generate_read_output(self) -> str:
+        """未来尝试适配options，现在以跑通为准！！"""
+        return "点击图片中的全部芳香环区域"
+
 
     def verify(self, answer_data: dict, user_input: Any) -> bool:
         """
