@@ -10,6 +10,10 @@
 
 **.mol文件来源**：https://ftp.ncbi.nlm.nih.gov/pubchem/Compound/CURRENT-Full/SDF/
 
+考虑使用：https://ftp.ncbi.nlm.nih.gov/pubchem/Compound/CURRENT-Full/SDF/Compound_167500001_168000000.sdf.gz
+
+（分子量比较大！！）
+
 预期实现至少以下类型的验证码
 
 - [x] 手性碳
@@ -23,6 +27,10 @@
 - [ ] 共线
 - [ ] 共振
 
+---
+
+### 项目施工中，暂无部署和使用文档
+
+未来会加入Dockerfile容器化部署
 
 
-https://ftp.ncbi.nlm.nih.gov/pubchem/Compound/CURRENT-Full/SDF/Compound_167500001_168000000.sdf.gz
