@@ -35,10 +35,10 @@ class AromaticCaptcha(BaseCaptcha):
 
     def generate_read_output(self) -> str:
         """未来尝试适配options，现在以跑通为准！！"""
-        return "点击图片中的全部芳香环区域"
+        return "请点击图片中【所有的】芳香环结构"
 
 
-    def verify(self, answer_data: dict, user_input: Any) -> bool:
+    def verify(self, answer_data: list, user_input: Any) -> bool:
         """
         验证用户点击坐标
         user_input: {"x": 123, "y": 456}

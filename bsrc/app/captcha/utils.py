@@ -12,7 +12,28 @@ from Crypto.Util.Padding import pad, unpad
 from Crypto.Random import get_random_bytes
 from rdkit.Chem.Draw import rdMolDraw2D
 
+def is_point_in_polygon(x, y, poly_coords):
+    """
+    射线法判断点 (x, y) 是否在多边形 poly_coords 内部
+    poly_coords: List of (x, y) tuples
+    """
+    n = len(poly_coords)
+    inside = False
+    p1x, p1y = poly_coords[0]
+    for i in range(n + 1):
+        p2x, p2y = poly_coords[i % n]
+        if y > min(p1y, p2y):
+            if y <= max(p1y, p2y):
+                if x <= max(p1x, p2x):
+                    if p1y != p2y:
+                        xin = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+                        if x <= xin:
+                            inside = not inside
+                    if p1x == p2x:
+                        inside = not inside
+        p1x, p1y = p2x, p2y
 
+    return inside
 
 def construct_rdkit(mol_path:str) -> Chem.Mol:
     """解析mol文件，构造rdkit对象，不要单独使用！！"""
@@ -79,6 +100,43 @@ def base_draw(mol: Chem.Mol, width, height):
     img_base64 = base64.b64encode(png_data).decode('utf-8')
 
     return img_base64
+
+
+def base_verify(user_input: Any, answer_data: list):
+    """
+    验证逻辑：点击所有芳香环
+    user_input: 前端传来的坐标列表，例如 [{"x": 100, "y": 200}, {"x": 300, "y": 400}]
+    answer_data: generate_answer 返回的多边形列表
+    """
+    if not isinstance(user_input, list):
+        logger.warning("User input must be a list of coordinates for multi-select")
+        return False
+
+    total_targets = len(answer_data)
+    hit_indices = set()
+
+    for click in user_input:
+        cx = float(click.get('x', -1))
+        cy = float(click.get('y', -1))
+
+        hit_any_this_click = False  # 这里的严格模式，可以使用captcha options去扩展，后面开分支写！！
+
+        for idx, polygon in enumerate(answer_data):
+            if is_point_in_polygon(cx, cy, polygon):
+                hit_indices.add(idx)
+                hit_any_this_click = True
+                # 这里不break，因为理论上两个环可能重叠（稠环），点一下可能选中两个
+
+        if not hit_any_this_click:
+            logger.info(f"Verify Failed: Click at ({cx}, {cy}) missed all targets.")
+            return False
+
+    if len(hit_indices) == total_targets:
+        logger.info(f"Verify Success: All {total_targets} rings found.")
+        return True
+    else:
+        logger.info(f"Verify Failed: Found {len(hit_indices)}/{total_targets} rings.")
+        return False
 
 
 def aes_cbc_encrypt(text: str, key: str) -> str:

@@ -2,7 +2,6 @@ from app.captcha.utils import base_draw, construct_rdkit
 from app.utils.logger import logger
 from rdkit import Chem
 from rdkit.Chem.Draw import rdMolDraw2D
-from typing import Any
 
 
 def draw_func(mol: Chem.rdchem.Mol, width: int, height: int) -> dict:
@@ -16,11 +15,21 @@ def draw_func(mol: Chem.rdchem.Mol, width: int, height: int) -> dict:
         }
     }
 
-def generate_answer(mol:Chem.rdchem.Mol, width: int, height: int) -> list:
+
+def generate_answer(mol: Chem.Mol, width: int, height: int) -> list:
+    """
+    返回所有芳香环的多边形顶点列表
+    返回结构示例:
+    [
+      [ (x1, y1), (x2, y2), ... (x6, y6) ],  # 第一个环的顶点
+      [ (x1, y1), ... ]                      # 第二个环的顶点
+    ]
+    """
     ri = mol.GetRingInfo()
-    valid_boxes = []
+    valid_polygons = []
 
     d2d = rdMolDraw2D.MolDraw2DCairo(width, height)
+    d2d.DrawMolecule(mol)
 
     for ring_atom_indices in ri.AtomRings():
         is_aromatic = True
@@ -30,22 +39,15 @@ def generate_answer(mol:Chem.rdchem.Mol, width: int, height: int) -> list:
                 break
 
         if is_aromatic:
-            xs, ys = [], []
+            polygon = []
             for atom_idx in ring_atom_indices:
+
                 p = d2d.GetDrawCoords(atom_idx)
-                xs.append(p.x)
-                ys.append(p.y)
+                polygon.append((p.x, p.y))
 
-            padding = 20
-            box = [
-                min(xs) - padding,
-                min(ys) - padding,
-                max(xs) + padding,
-                max(ys) + padding
-            ]
-            valid_boxes.append(box)
+            valid_polygons.append(polygon)
 
-    return valid_boxes
+    return valid_polygons
 
 
 def judge_mol_file(mol: Chem.Mol):
@@ -62,24 +64,7 @@ def judge_mol_file(mol: Chem.Mol):
         logger.error(f"Exception when judge mol file: {e}")
         return False
 
-def base_verify(user_input:Any,answer_data:dict):
-    """点击区域的验证函数"""
-    if not user_input or 'x' not in user_input or 'y' not in user_input:
-        logger.warning("Invalid user input format")
-        return False
 
-    x = float(user_input['x'])
-    y = float(user_input['y'])
-
-    boxes = answer_data.get('boxes', [])
-
-    for box in boxes:
-        if box[0] <= x <= box[2] and box[1] <= y <= box[3]:
-            logger.info(f"Verify Success: ({x}, {y}) hit box {box}")
-            return True
-
-    logger.info(f"Verify Failed: ({x}, {y}) missed all boxes")
-    return False
 
 if __name__ == '__main__':
     a = draw_func(construct_rdkit(mol_path="../../../data/mol/50115.mol"), 800, 600)
