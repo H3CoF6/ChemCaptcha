@@ -1,11 +1,12 @@
 import os
 from app.utils.logger import logger
 from app.utils.exceptions import CaptchaException
+import app.utils.config as config
 import base64
 from rdkit import Chem
 from rdkit.Chem.Draw import rdMolDraw2D
 
-def generate_func(mol_path: str, width: int = 400, height: int = 300) -> dict:
+def generate_func(mol_path: str, width: int = 800, height: int = 600) -> dict:
     if not os.path.exists(mol_path):
         logger.error(f"Mol file not found: {mol_path}")
         raise CaptchaException(f"Mol file not found: {mol_path}")
@@ -30,12 +31,21 @@ def generate_func(mol_path: str, width: int = 400, height: int = 300) -> dict:
         raise
 
     d2d = rdMolDraw2D.MolDraw2DCairo(width, height)
-
     # 不是形参，是self类型的注释！！！
     # noinspection PyArgumentList
-    d2d.drawOptions().addAtomIndices = False
-    # noinspection PyArgumentList
-    d2d.drawOptions().clearBackground = False
+    opts = d2d.drawOptions()
+
+    opts.addAtomIndices = False
+    opts.clearBackground = False
+    if config.FONT_NAME != "":
+        font_path = os.path.join(config.FONT_DIR, config.FONT_NAME)
+        if os.path.exists(font_path):
+            opts.fontFile = font_path
+
+
+        opts.comicMode = True
+        opts.bondLineWidth = 2  # 加粗线条，干扰细线识别
+
 
     d2d.DrawMolecule(mol)
     ri = mol.GetRingInfo()
@@ -81,16 +91,20 @@ def generate_func(mol_path: str, width: int = 400, height: int = 300) -> dict:
         }
     }
 
-# def judge_mol_file(mol: Chem.Mol):
-#     """
-#     筛选逻辑：只要分子里包含至少一个芳香环，我就要。
-#     """
-#     try:
-#         ri = mol.GetRingInfo()
-#         for ring in ri.AtomRings():
-#             if all(mol.GetAtomWithIdx(idx).GetIsAromatic() for idx in ring):
-#                 return True
-#         return False
-#     except Exception as e:
-#         logger.error(f"Exception when judge mol file: {e}")
-#         return False
+def judge_mol_file(mol: Chem.Mol):
+    """
+    筛选逻辑：只要分子里包含至少一个芳香环，我就要。
+    """
+    try:
+        ri = mol.GetRingInfo()
+        for ring in ri.AtomRings():
+            if all(mol.GetAtomWithIdx(idx).GetIsAromatic() for idx in ring):
+                return True
+        return False
+    except Exception as e:
+        logger.error(f"Exception when judge mol file: {e}")
+        return False
+
+if __name__ == '__main__':
+    a = generate_func(mol_path="../../../data/mol/50115.mol")
+    print(a.get('img_base64'))

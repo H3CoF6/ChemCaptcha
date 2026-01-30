@@ -6,6 +6,7 @@ MOL_DIR = os.path.join(CURRENT_DIR, "..", "..", "data", "mol")
 DATABASE_DIR = os.path.join(CURRENT_DIR, "..", "..", "data", "db")
 LOG_PATH = os.path.join(CURRENT_DIR, "..", "..", "data", "log")
 MOL_DB_PATH = os.path.join(DATABASE_DIR, "mol.db")
+FONT_DIR = os.path.join(CURRENT_DIR, "..", "..", "data", "fonts")
 
 # 日志等级
 TERMINAL_LOG_LEVEL = "INFO"
@@ -14,12 +15,5 @@ FILE_LOG_LEVEL = "DEBUG"
 # AES加解密  不需要环境变量，只是略微增加前端逆向难度
 # 不要用这么蠢的密码！！
 AES_KEY = "1234567890987654"
-AES_IV = "9876543210123456"
 
-def count_files_fast(path):
-    count = 0
-    with os.scandir(path) as it:
-        for entry in it:
-            if entry.is_file():  # 只计算文件，排除子文件夹
-                count += 1
-    return count
+FONT_NAME = "ComicNeue-Bold.ttf" # 不启用则留空

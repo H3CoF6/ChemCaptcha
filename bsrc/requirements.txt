@@ -1,4 +1,6 @@
-rdkit
-colorlog
-rich
+rdkit~=2025.9.3
+colorlog~=6.10.1
+rich~=14.3.1
 tqdm
+pycryptodome~=3.23.0
+pillow~=12.1.0
