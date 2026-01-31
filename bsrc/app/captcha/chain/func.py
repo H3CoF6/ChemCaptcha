@@ -1,4 +1,4 @@
-from app.captcha.utils import base_draw
+from app.captcha.utils import base_draw, point_to_s
 from rdkit import Chem
 from rdkit.Chem.Draw import rdMolDraw2D
 
@@ -116,12 +116,7 @@ def generate_answer_coords(mol: Chem.Mol, width: int, height: int) -> list:
         # 生成一个以原子为中心的小方框或点
         # 这里为了兼容 base_verify 的多边形逻辑，画一个小矩形
         delta = 15  # 触控半径
-        polygon = [
-            (p.x - delta, p.y - delta),
-            (p.x + delta, p.y - delta),
-            (p.x + delta, p.y + delta),
-            (p.x - delta, p.y + delta)
-        ]
+        polygon = point_to_s(p, delta)
         valid_polygons.append(polygon)
 
     return valid_polygons

@@ -160,3 +160,44 @@ def aes_cbc_decrypt(encrypted_text: str, key: str) -> str:
     decrypted_padded = cipher.decrypt(ciphertext)
     data = unpad(decrypted_padded, AES.block_size)
     return data.decode('utf-8')
+
+
+def point_to_s(p, delta):
+    """点计算点击热区"""
+    return [
+        (p.x - delta, p.y - delta),
+        (p.x + delta, p.y - delta),
+        (p.x + delta, p.y + delta),
+        (p.x - delta, p.y + delta)
+    ]
+
+
+def draw_func(mol: Chem.rdchem.Mol, width: int, height: int) -> dict:
+    b64_data = base_draw(mol, width, height)
+    return {
+        "img_base64": f"data:image/png;base64,{b64_data}",
+        "size": {
+            "width": width,
+            "height": height
+        }
+    }
+
+
+def generate_answer_coords(mol: Chem.Mol, width: int, height: int, target_smarts: str) -> list:
+    pattern = Chem.MolFromSmarts(target_smarts)
+    matches = mol.GetSubstructMatches(pattern)
+
+    valid_polygons = []
+    d2d = rdMolDraw2D.MolDraw2DCairo(width, height)
+    d2d.DrawMolecule(mol)
+
+    for match_indices in matches:
+
+        polygon = []
+        for atom_idx in match_indices:
+            p = d2d.GetDrawCoords(atom_idx)
+            polygon.append((p.x, p.y))
+
+        valid_polygons.append(polygon)
+
+    return valid_polygons

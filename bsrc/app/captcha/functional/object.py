@@ -1,5 +1,4 @@
 import random
-from .func import *
 from .db import *
 from .definitions import FUNCTIONAL_GROUPS
 from app.captcha.base import BaseCaptcha
