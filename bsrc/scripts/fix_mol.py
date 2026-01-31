@@ -2,6 +2,7 @@
 修复可能存在的python解析mol文件的格式问题
 第三行应该是注释或者空行，但是mol文件可能没有，导致解析/渲染报错
 该脚本应该放到mol文件的目录去执行！！
+(docker应该用不上)
 """
 import os
 import glob
