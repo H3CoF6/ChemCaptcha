@@ -14,7 +14,8 @@ class ChiralCaptcha(BaseCaptcha):
         self.height = height
 
         if runtime:
-            self.mol_path = get_random_line_by_table_name(table_name="chiral").get("path")
+            self.mol_info = get_random_line_by_table_name(table_name="chiral")
+            self.mol_path = self.mol_info.get("path")
             self.rdkit_object = construct_rdkit(self.mol_path)
 
     def get_table_schema(self) -> str:

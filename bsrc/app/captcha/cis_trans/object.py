@@ -14,7 +14,8 @@ class CisTransCaptcha(BaseCaptcha):
         self.height = height
 
         if runtime:
-            self.mol_path = get_random_line_by_table_name(table_name="cis_trans").get("path")
+            self.mol_info = get_random_line_by_table_name(table_name="cis_trans")
+            self.mol_path = self.mol_info.get("path")
             self.rdkit_object = construct_rdkit(self.mol_path)
 
     def get_table_schema(self) -> str:

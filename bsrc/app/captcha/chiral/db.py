@@ -17,8 +17,8 @@ def db_init(table_name):
 
 def get_mol_value(mol: Chem.Mol):
     try:
-        # 寻找手性中心 (includeUnassigned=False 确保是明确标记的手性)
-        chiral_centers = Chem.FindMolChiralCenters(mol, includeUnassigned=False)
+        # 寻找手性中心 (includeUnassigned=False 确保是明确标记的手性)  ????  shit gemini   为什么要标明R/S  是手性碳就行w
+        chiral_centers = Chem.FindMolChiralCenters(mol, includeUnassigned=True)
 
         if not chiral_centers:
             return None
