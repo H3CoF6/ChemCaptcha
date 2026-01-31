@@ -8,6 +8,7 @@ import importlib
 import os
 import app.captcha
 from app.captcha.base import BaseCaptcha
+from app.utils.logger import logger
 
 
 def load_all_plugins():
@@ -19,7 +20,7 @@ def load_all_plugins():
                 module_name = f"app.captcha.{name}.object"
                 importlib.import_module(module_name)
             except ImportError:
-                pass
+                logger.error(f"plugin {name} import error!!")
 
 
 load_all_plugins()

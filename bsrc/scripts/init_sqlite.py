@@ -71,7 +71,7 @@ def find_next_available_index(mol_dir, current_index):
 
 def classify_runner(mol_dir=MOL_DIR):
 
-    plugins = [cls() for cls in PLUGINS.values()]
+    plugins = [cls(10, 10, runtime = False) for cls in PLUGINS.values()]    #  只是扫描，参数随意注册！！！  # 显式传参
     if not plugins:
         console.print("[bold red]❌ No plugins found![/]")
         return

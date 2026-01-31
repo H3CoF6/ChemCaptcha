@@ -9,11 +9,13 @@ class ChiralCaptcha(BaseCaptcha):
     slug = "chiral"
     table_name = "chiral"
 
-    def __init__(self, width, height):
+    def __init__(self, width, height, runtime = True):
         self.width = width
         self.height = height
-        self.mol_path = get_random_line_by_table_name(table_name=self.table_name)
-        self.rdkit_object = construct_rdkit(self.mol_path)
+
+        if runtime:
+            self.mol_path = get_random_line_by_table_name(table_name="chiral").get("path")
+            self.rdkit_object = construct_rdkit(self.mol_path)
 
     def get_table_schema(self) -> str:
         return db_init(self.table_name)

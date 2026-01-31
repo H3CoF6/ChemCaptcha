@@ -9,11 +9,13 @@ class CisTransCaptcha(BaseCaptcha):
     slug = "cis_trans"
     table_name = "cis_trans"
 
-    def __init__(self, width, height):
+    def __init__(self, width, height, runtime = True):
         self.width = width
         self.height = height
-        self.mol_path = get_random_line_by_table_name(table_name=self.table_name)
-        self.rdkit_object = construct_rdkit(self.mol_path)
+
+        if runtime:
+            self.mol_path = get_random_line_by_table_name(table_name="cis_trans").get("path")
+            self.rdkit_object = construct_rdkit(self.mol_path)
 
     def get_table_schema(self) -> str:
         return db_init(self.table_name)

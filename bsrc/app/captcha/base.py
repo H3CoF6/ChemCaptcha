@@ -107,10 +107,6 @@ class BaseOptions(ABC):
         cls._registry[cls.slug] = cls
         logger.info(f"[Plugin Options Registered]: {cls.slug} -> {cls.__name__}")
 
-    @classmethod
-    def get_plugins_options(cls):
-        return cls._registry
-
 
     @abstractmethod
     def get_random_options(self):
