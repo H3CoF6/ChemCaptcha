@@ -10,6 +10,9 @@ AES_KEY = "1234567890987654"
 
 FONT_NAME = "ComicNeue-Bold.ttf" # 不启用则留空
 
+# 默认验证码大小  （这里略大了）
+DEFAULT_WIDTH = 800
+DEFAULT_HEIGHT = 600
 
 # 路径配置
 CURRENT_DIR = os.path.dirname(__file__)
