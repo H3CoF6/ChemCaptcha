@@ -1,9 +1,9 @@
 /* src/components/CaptchaCanvas.tsx */
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiLoader, FiCheckCircle, FiXCircle, FiRefreshCw, FiTarget } from 'react-icons/fi';
 import styles from './CaptchaCanvas.module.scss';
 import { encryptPayload, decryptPayload } from '@/utils/crypto';
+import { FiLoader, FiCheckCircle, FiXCircle, FiRefreshCw, FiTarget } from 'react-icons/fi';
 
 // ... Points 接口保持不变 ...
 interface Point { x: number; y: number; id: number; }
@@ -141,23 +141,27 @@ export default function CaptchaCanvas({ slug }: Props) {
                             {status === 'success' && (
                                 <motion.div
                                     className={styles.resultOverlay}
-                                    initial={{opacity:0}}
-                                    animate={{opacity:1}}
-                                    exit={{opacity:0}}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    // --- 添加这一行 ---
+                                    style={{ zIndex: 100 }}
                                 >
                                     <FiCheckCircle size={80} color="var(--success-color)" />
-                                    <span style={{color: 'var(--success-color)'}}>VERIFIED</span>
+                                    <span style={{ color: 'var(--success-color)', marginTop: 10, fontWeight: 'bold' }}>VERIFIED</span>
                                 </motion.div>
                             )}
                             {status === 'fail' && (
                                 <motion.div
                                     className={styles.resultOverlay}
-                                    initial={{opacity:0}}
-                                    animate={{opacity:1}}
-                                    exit={{opacity:0}}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    // --- 添加这一行 ---
+                                    style={{ zIndex: 100 }}
                                 >
                                     <FiXCircle size={80} color="var(--error-color)" />
-                                    <span style={{color: 'var(--error-color)'}}>FAILED</span>
+                                    <span style={{ color: 'var(--error-color)', marginTop: 10, fontWeight: 'bold' }}>FAILED</span>
                                 </motion.div>
                             )}
                         </AnimatePresence>
