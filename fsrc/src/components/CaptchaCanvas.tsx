@@ -1,18 +1,13 @@
+/* src/components/CaptchaCanvas.tsx */
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiLoader, FiCheckCircle, FiXCircle, FiRefreshCw } from 'react-icons/fi'; 
+import { FiLoader, FiCheckCircle, FiXCircle, FiRefreshCw, FiTarget } from 'react-icons/fi';
 import styles from './CaptchaCanvas.module.scss';
 import { encryptPayload, decryptPayload } from '@/utils/crypto';
 
-interface Point {
-    x: number;
-    y: number;
-    id: number; // 唯一ID用于删除
-}
-
-interface Props {
-    slug: string; // 插件标识
-}
+// ... Points 接口保持不变 ...
+interface Point { x: number; y: number; id: number; }
+interface Props { slug: string; }
 
 export default function CaptchaCanvas({ slug }: Props) {
     const [loading, setLoading] = useState(true);
@@ -21,21 +16,21 @@ export default function CaptchaCanvas({ slug }: Props) {
     const [status, setStatus] = useState<'idle' | 'verifying' | 'success' | 'fail'>('idle');
     const [msg, setMsg] = useState('');
 
-    // 加载验证码
+    // 使用 useRef 防止闭包陷阱，如果需要的话 (这里主要用 state 即可)
+
     const loadCaptcha = async () => {
         setLoading(true);
         setMarkers([]);
         setStatus('idle');
         setMsg('');
         try {
-            // 兼容 Random 和 具体 Slug
             const url = slug === 'random'
                 ? '/api/captcha/random?width=800&height=600'
                 : `/api/captcha/${slug}/generate?width=800&height=600`;
-
             const res = await fetch(url);
             const json = await res.json();
             setData(json);
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
             setMsg("连接服务器失败");
         } finally {
@@ -45,59 +40,62 @@ export default function CaptchaCanvas({ slug }: Props) {
 
     useEffect(() => { loadCaptcha(); }, [slug]);
 
-    // 点击图片添加标记
+    // 点击背景添加标记
     const handleBgClick = (e: React.MouseEvent) => {
         if (status !== 'idle') return;
         const rect = e.currentTarget.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-
         setMarkers(prev => [...prev, { x, y, id: Date.now() }]);
     };
 
-    // 点击标记删除自己
     const removeMarker = (e: React.MouseEvent, id: number) => {
-        e.stopPropagation(); // 防止触发背景点击
+        e.stopPropagation();
         if (status !== 'idle') return;
         setMarkers(prev => prev.filter(m => m.id !== id));
     };
 
-    // 验证逻辑 (保持加密)
+    // 自动刷新逻辑封装
+    const autoNext = (delay = 1500) => {
+        setTimeout(() => {
+            loadCaptcha();
+        }, delay);
+    };
+
     const verify = async () => {
         if (!data) return;
         setStatus('verifying');
 
         try {
-            // 转换坐标格式
             const userInput = markers.map(m => ({ x: m.x, y: m.y }));
-
             const payload = encryptPayload({
                 token: data.token,
                 user_input: userInput
             });
-
             const res = await fetch('/api/captcha/verify', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ data: payload })
             });
-
             const resJson = await res.json();
             const result = decryptPayload(resJson.data);
 
             if (result && result.success) {
                 setStatus('success');
-                setMsg(result.message);
+                setMsg(result.message || "验证通过");
+                // 成功 -> 自动下一题
+                autoNext(1000);
             } else {
                 setStatus('fail');
                 setMsg(result.message || "验证失败");
-                setTimeout(() => {
-                    setStatus('idle');
-                    setMarkers([]);
-                }, 2000);
+                // 失败 -> 也自动下一题 (符合你的需求)
+                autoNext(1500);
             }
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
             setStatus('fail');
+            setMsg("系统错误");
+            autoNext(1500);
         }
     };
 
@@ -105,7 +103,8 @@ export default function CaptchaCanvas({ slug }: Props) {
         <div className={styles.canvasContainer}>
             <div className={styles.header}>
                 <h3>{slug.toUpperCase()} 验证</h3>
-                <p>{data?.prompt || "正在加载..."}</p>
+                {/* 使用图标装饰 Prompt */}
+                <p><FiTarget style={{verticalAlign: 'middle', marginRight: 5}}/> {data?.prompt || "正在加载..."}</p>
             </div>
 
             <div className={styles.stage} style={{ width: 800, height: 600 }}>
@@ -125,31 +124,43 @@ export default function CaptchaCanvas({ slug }: Props) {
                                 <motion.div
                                     key={m.id}
                                     className={styles.marker}
-                                    style={{ left: m.x, top: m.y }}
+                                    style={{ left: m.x-12, top: m.y-12 }} // 不知道什么bug，一直定位到左下角，暂时这样修一下，我要好好学前端！！！  // todo !!!
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
                                     exit={{ scale: 0 }}
                                     onClick={(e) => removeMarker(e, m.id)}
-                                    whileHover={{ scale: 1.2, backgroundColor: "var(--error-color)" }}
+                                    whileHover={{ scale: 1.2 }}
                                 >
                                     {index + 1}
                                 </motion.div>
                             ))}
                         </AnimatePresence>
 
-                        {/* 结果遮罩 */}
-                        {status === 'success' && (
-                            <motion.div className={styles.resultOverlay} initial={{opacity:0}} animate={{opacity:1}}>
-                                <FiCheckCircle size={60} color="var(--success-color)" />
-                                <span>验证通过</span>
-                            </motion.div>
-                        )}
-                        {status === 'fail' && (
-                            <motion.div className={styles.resultOverlay} initial={{opacity:0}} animate={{opacity:1}}>
-                                <FiXCircle size={60} color="var(--error-color)" />
-                                <span>验证失败</span>
-                            </motion.div>
-                        )}
+                        {/* 结果层 */}
+                        <AnimatePresence>
+                            {status === 'success' && (
+                                <motion.div
+                                    className={styles.resultOverlay}
+                                    initial={{opacity:0}}
+                                    animate={{opacity:1}}
+                                    exit={{opacity:0}}
+                                >
+                                    <FiCheckCircle size={80} color="var(--success-color)" />
+                                    <span style={{color: 'var(--success-color)'}}>VERIFIED</span>
+                                </motion.div>
+                            )}
+                            {status === 'fail' && (
+                                <motion.div
+                                    className={styles.resultOverlay}
+                                    initial={{opacity:0}}
+                                    animate={{opacity:1}}
+                                    exit={{opacity:0}}
+                                >
+                                    <FiXCircle size={80} color="var(--error-color)" />
+                                    <span style={{color: 'var(--error-color)'}}>FAILED</span>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </>
                 )}
             </div>
@@ -157,13 +168,15 @@ export default function CaptchaCanvas({ slug }: Props) {
             <div className={styles.footer}>
                 <div className={styles.statusText}>{msg}</div>
                 <div className={styles.actions}>
-                    <button className={styles.btnIcon} onClick={loadCaptcha}><FiRefreshCw /></button>
+                    <button className={styles.btnIcon} onClick={() => loadCaptcha()} title="换一张">
+                        <FiRefreshCw />
+                    </button>
                     <button
                         className={styles.btnPrimary}
                         onClick={verify}
                         disabled={status !== 'idle' || markers.length === 0}
                     >
-                        {status === 'verifying' ? '计算中...' : '提交验证'}
+                        {status === 'verifying' ? <FiLoader className={styles.spin}/> : '提交验证'}
                     </button>
                 </div>
             </div>

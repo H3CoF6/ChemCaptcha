@@ -1,4 +1,6 @@
+/* src/components/GlassCard.module.scss */
 .card {
+  position: relative;
   background: var(--glass-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -6,4 +8,20 @@
   border-radius: 24px;
   box-shadow: var(--glass-shadow);
   overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+/* 鼠标跟随的高亮层 */
+.spotlight {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  transition: opacity 0.3s ease;
+}
+
+.content {
+  position: relative;
+  z-index: 2; /* 确保内容在光效之上 */
+  height: 100%; /* 继承高度 */
 }

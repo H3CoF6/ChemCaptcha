@@ -1,0 +1,47 @@
+/* src/components/Background/Background.module.scss */
+.container {
+  position: fixed;
+  inset: 0;
+  z-index: 0; /* 最底层 */
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.6;
+  animation: float 20s infinite ease-in-out alternate;
+}
+
+.blob1 {
+  top: -10%; left: -10%; width: 50vw; height: 50vw;
+  background: var(--blob-1);
+}
+.blob2 {
+  top: 20%; right: -20%; width: 40vw; height: 40vw;
+  background: var(--blob-2);
+  animation-delay: -5s;
+}
+.blob3 {
+  bottom: -10%; left: 20%; width: 60vw; height: 60vw;
+  background: var(--blob-3);
+  animation-delay: -10s;
+}
+
+.patternLayer {
+  position: absolute;
+  inset: 0;
+}
+
+.iconWrapper {
+  position: absolute;
+  color: var(--text-primary);
+  /* 确保图标不会阻挡任何潜在的交互（虽然这一层本来就在下面） */
+}
+
+@keyframes float {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(30px, 50px) scale(1.1); }
+}

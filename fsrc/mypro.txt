@@ -1,0 +1,652 @@
+============================eslint.config.js============================
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
+import { defineConfig, globalIgnores } from 'eslint/config'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.recommended,
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+    ],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+    },
+  },
+])
+
+==========================================================================
+
+============================vite.config.ts============================
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      }
+    }
+  }
+})
+==========================================================================
+
+============================src/App.module.scss============================
+.layout {
+  position: relative; /* 相对定位 */
+  z-index: 1;         /* 确保在背景 glow (z-index: 0) 之上 */
+  display: flex;
+  height: 100vh;
+  padding: 20px;
+  gap: 20px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.sidebar {
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+}
+
+.brand {
+  padding: 0 24px 20px;
+  font-size: 1.5rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--glass-border);
+  color: var(--text-primary);
+
+  .logoIcon { color: var(--accent-color); }
+}
+
+.menu {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 12px;
+}
+
+.sectionTitle {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  margin: 15px 12px 8px;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 4px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-secondary);
+
+  &:hover {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-primary);
+  }
+
+  &.active {
+    background: linear-gradient(90deg, rgba(0, 242, 255, 0.1), transparent);
+    border-left: 3px solid var(--accent-color);
+    color: var(--accent-color);
+    font-weight: 600;
+  }
+}
+
+.mainContent {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.canvasWrapper {
+  padding: 40px;
+  /* 可以在这里给个具体的最大宽度 */
+}
+==========================================================================
+
+============================src/App.tsx============================
+import { useState, useEffect } from 'react';
+import { FiBox, FiActivity, FiLayers } from 'react-icons/fi';
+import styles from './App.module.scss';
+import GlassCard from '@/components/GlassCard';
+import CaptchaCanvas from '@/components/CaptchaCanvas';
+import './styles/global.scss';
+import { time } from "framer-motion";
+
+export default function App() {
+    const [plugins, setPlugins] = useState<string[]>([]);
+    const [activeSlug, setActiveSlug] = useState('random');
+
+    useEffect(() => {
+        fetch('/api/captcha/list')
+            .then(res => res.json())
+            .then(data => setPlugins(data))
+            .catch(() => console.error("Failed to load plugins"));
+    }, []);
+
+    return (
+        <>
+            {/* 1. 背景层：独立出来，自闭合，只负责发光 */}
+            <div
+                className="background-glow"
+                style={{'--bg-image-url': `url('https://t.alcy.cc/fj?time=${time.now()}')`} as never}
+            />
+
+            {/* 2. 内容层：作为兄弟元素，层级更高，不受模糊影响 */}
+            <div className={styles.layout}>
+
+                {/* 左侧侧边栏 */}
+                <GlassCard className={styles.sidebar}>
+                    <div className={styles.brand}>
+                        <FiActivity className={styles.logoIcon} />
+                        <span>ChemShield</span>
+                    </div>
+
+                    <div className={`${styles.menu} scroll-container`}>
+                        <div className={styles.sectionTitle}>Discovery</div>
+                        <div
+                            className={`${styles.menuItem} ${activeSlug === 'random' ? styles.active : ''}`}
+                            onClick={() => setActiveSlug('random')}
+                        >
+                            <FiBox /> 随机测试 (Random)
+                        </div>
+
+                        <div className={styles.sectionTitle}>Modules</div>
+                        {plugins.map(slug => (
+                            <div
+                                key={slug}
+                                className={`${styles.menuItem} ${activeSlug === slug ? styles.active : ''}`}
+                                onClick={() => setActiveSlug(slug)}
+                            >
+                                <FiLayers /> {slug.toUpperCase()}
+                            </div>
+                        ))}
+                    </div>
+                </GlassCard>
+
+                {/* 右侧主区域 */}
+                <main className={styles.mainContent}>
+                    <GlassCard className={styles.canvasWrapper}>
+                        <CaptchaCanvas key={activeSlug} slug={activeSlug} />
+                    </GlassCard>
+                </main>
+            </div>
+        </>
+    );
+}
+==========================================================================
+
+============================src/main.tsx============================
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.tsx'
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+        <App />
+    </React.StrictMode>,
+)
+==========================================================================
+
+============================src/components/CaptchaCanvas.module.scss============================
+.canvasContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 20px;
+  h3 { margin: 0; font-weight: 700; color: var(--accent-color); text-shadow: 0 0 10px var(--accent-glow); }
+  p { margin: 5px 0 0; font-size: 0.9rem; color: var(--text-secondary); }
+}
+
+.stage {
+  position: relative;
+  background: rgba(0,0,0,0.2);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px dashed var(--glass-border);
+  transition: border-color 0.3s;
+
+  &:hover {
+    border-color: var(--accent-color);
+  }
+}
+
+.captchaImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  cursor: crosshair;
+  user-select: none;
+}
+
+.marker {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background: var(--accent-color);
+  color: #000;
+  border-radius: 50%;
+  font-weight: bold;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%); /* 居中 */
+  cursor: pointer;
+  box-shadow: 0 0 10px var(--accent-color);
+  z-index: 10;
+}
+
+.resultOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(5px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.loader {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  .spin { animation: spin 1s linear infinite; font-size: 2rem; color: var(--accent-color); }
+}
+
+.footer {
+  margin-top: 20px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+}
+
+.btnPrimary {
+  background: var(--accent-color);
+  color: #000;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover:not(:disabled) { box-shadow: 0 0 15px var(--accent-glow); transform: translateY(-2px); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.btnIcon {
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  color: #fff;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover { background: rgba(255,255,255,0.1); }
+}
+
+@keyframes spin { 100% { transform: rotate(360deg); } }
+==========================================================================
+
+============================src/components/CaptchaCanvas.tsx============================
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiLoader, FiCheckCircle, FiXCircle, FiRefreshCw } from 'react-icons/fi'; 
+import styles from './CaptchaCanvas.module.scss';
+import { encryptPayload, decryptPayload } from '@/utils/crypto';
+
+interface Point {
+    x: number;
+    y: number;
+    id: number; // 唯一ID用于删除
+}
+
+interface Props {
+    slug: string; // 插件标识
+}
+
+export default function CaptchaCanvas({ slug }: Props) {
+    const [loading, setLoading] = useState(true);
+    const [data, setData] = useState<any>(null);
+    const [markers, setMarkers] = useState<Point[]>([]);
+    const [status, setStatus] = useState<'idle' | 'verifying' | 'success' | 'fail'>('idle');
+    const [msg, setMsg] = useState('');
+
+    // 加载验证码
+    const loadCaptcha = async () => {
+        setLoading(true);
+        setMarkers([]);
+        setStatus('idle');
+        setMsg('');
+        try {
+            // 兼容 Random 和 具体 Slug
+            const url = slug === 'random'
+                ? '/api/captcha/random?width=800&height=600'
+                : `/api/captcha/${slug}/generate?width=800&height=600`;
+
+            const res = await fetch(url);
+            const json = await res.json();
+            setData(json);
+        } catch (e) {
+            setMsg("连接服务器失败");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => { loadCaptcha(); }, [slug]);
+
+    // 点击图片添加标记
+    const handleBgClick = (e: React.MouseEvent) => {
+        if (status !== 'idle') return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        setMarkers(prev => [...prev, { x, y, id: Date.now() }]);
+    };
+
+    // 点击标记删除自己
+    const removeMarker = (e: React.MouseEvent, id: number) => {
+        e.stopPropagation(); // 防止触发背景点击
+        if (status !== 'idle') return;
+        setMarkers(prev => prev.filter(m => m.id !== id));
+    };
+
+    // 验证逻辑 (保持加密)
+    const verify = async () => {
+        if (!data) return;
+        setStatus('verifying');
+
+        try {
+            // 转换坐标格式
+            const userInput = markers.map(m => ({ x: m.x, y: m.y }));
+
+            const payload = encryptPayload({
+                token: data.token,
+                user_input: userInput
+            });
+
+            const res = await fetch('/api/captcha/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: payload })
+            });
+
+            const resJson = await res.json();
+            const result = decryptPayload(resJson.data);
+
+            if (result && result.success) {
+                setStatus('success');
+                setMsg(result.message);
+            } else {
+                setStatus('fail');
+                setMsg(result.message || "验证失败");
+                setTimeout(() => {
+                    setStatus('idle');
+                    setMarkers([]);
+                }, 2000);
+            }
+        } catch (e) {
+            setStatus('fail');
+        }
+    };
+
+    return (
+        <div className={styles.canvasContainer}>
+            <div className={styles.header}>
+                <h3>{slug.toUpperCase()} 验证</h3>
+                <p>{data?.prompt || "正在加载..."}</p>
+            </div>
+
+            <div className={styles.stage} style={{ width: 800, height: 600 }}>
+                {loading && <div className={styles.loader}><FiLoader className={styles.spin} /></div>}
+
+                {!loading && data && (
+                    <>
+                        <img
+                            src={`data:image/png;base64,${data.img_base64}`}
+                            className={styles.captchaImg}
+                            onClick={handleBgClick}
+                            alt="captcha"
+                        />
+
+                        <AnimatePresence>
+                            {markers.map((m, index) => (
+                                <motion.div
+                                    key={m.id}
+                                    className={styles.marker}
+                                    style={{ left: m.x, top: m.y }}
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    exit={{ scale: 0 }}
+                                    onClick={(e) => removeMarker(e, m.id)}
+                                    whileHover={{ scale: 1.2, backgroundColor: "var(--error-color)" }}
+                                >
+                                    {index + 1}
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
+
+                        {/* 结果遮罩 */}
+                        {status === 'success' && (
+                            <motion.div className={styles.resultOverlay} initial={{opacity:0}} animate={{opacity:1}}>
+                                <FiCheckCircle size={60} color="var(--success-color)" />
+                                <span>验证通过</span>
+                            </motion.div>
+                        )}
+                        {status === 'fail' && (
+                            <motion.div className={styles.resultOverlay} initial={{opacity:0}} animate={{opacity:1}}>
+                                <FiXCircle size={60} color="var(--error-color)" />
+                                <span>验证失败</span>
+                            </motion.div>
+                        )}
+                    </>
+                )}
+            </div>
+
+            <div className={styles.footer}>
+                <div className={styles.statusText}>{msg}</div>
+                <div className={styles.actions}>
+                    <button className={styles.btnIcon} onClick={loadCaptcha}><FiRefreshCw /></button>
+                    <button
+                        className={styles.btnPrimary}
+                        onClick={verify}
+                        disabled={status !== 'idle' || markers.length === 0}
+                    >
+                        {status === 'verifying' ? '计算中...' : '提交验证'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+==========================================================================
+
+============================src/components/GlassCard.module.scss============================
+.card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  box-shadow: var(--glass-shadow);
+  overflow: hidden;
+}
+==========================================================================
+
+============================src/components/GlassCard.tsx============================
+import { motion } from 'framer-motion';
+import type {ReactNode} from 'react';
+import styles from './GlassCard.module.scss';
+
+interface GlassCardProps {
+    children: ReactNode;
+    className?: string;
+    hoverEffect?: boolean;
+}
+
+export default function GlassCard({ children, className = '', hoverEffect = false }: GlassCardProps) {
+    return (
+        <motion.div
+            className={`${styles.card} ${className}`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileHover={hoverEffect ? { scale: 1.02, boxShadow: "0 0 20px var(--accent-glow)" } : {}}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        >
+            {children}
+        </motion.div>
+    );
+}
+==========================================================================
+
+============================src/styles/global.scss============================
+/* src/styles/global.scss */
+:root {
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    --text-primary: #0017ff;
+    --text-secondary: #555555;
+    --accent-color: #0052f1; /* 赛博蓝 */
+    --accent-glow: rgba(0, 242, 255, 0.5);
+    --error-color: #ff1144;
+    --success-color: #05ffa1;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #050505;
+    color: var(--text-primary);
+    overflow: hidden; /* 防止滚动，全屏应用 */
+}
+
+/* 背景光晕动画 */
+.background-glow {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    /* z-index: -1;  <-- 删掉这个 -1，因为它可能被 body 背景盖住 */
+    z-index: 0;      /* 改为 0 */
+    pointer-events: none; /* 关键：让鼠标穿透背景，点击到下面的内容（虽然内容在上面，但以防万一） */
+
+    /* ... 渐变和 filter 保持不变 ... */
+    filter: blur(0px);
+    background-size: cover;
+    background: var(--bg-image-url) center;
+    transition: background-image 0.5s ease;
+}
+
+/* 滚动条隐藏但可滚 */
+.scroll-container::-webkit-scrollbar {
+    width: 4px;
+}
+.scroll-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+.scroll-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+==========================================================================
+
+============================src/utils/crypto.ts============================
+import CryptoJS from 'crypto-js';
+
+// todo  环境变量！！！
+const AES_KEY = CryptoJS.enc.Utf8.parse("1234567890987654");
+
+/**
+ * AES-CBC 加密 (对应 Python: aes_cbc_encrypt)
+ * 逻辑: 生成随机 IV -> 加密 -> 拼接 IV + 密文 -> Base64
+ */
+export const encryptPayload = (data: object): string => {
+    const jsonStr = JSON.stringify(data);
+    const iv = CryptoJS.lib.WordArray.random(16);
+
+    const encrypted = CryptoJS.AES.encrypt(jsonStr, AES_KEY, {
+        iv: iv,
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7
+    });
+    
+    const combined = iv.clone().concat(encrypted.ciphertext);
+    return CryptoJS.enc.Base64.stringify(combined);
+};
+
+/**
+ * AES-CBC 解密 (对应 Python: aes_cbc_decrypt)
+ * 逻辑: Base64解码 -> 提取前16字节为 IV -> 解密
+ */
+export const decryptPayload = (base64Str: string): any => {
+    try {
+        const combined = CryptoJS.enc.Base64.parse(base64Str);
+        const iv = CryptoJS.lib.WordArray.create(combined.words.slice(0, 4));
+        const ciphertext = CryptoJS.lib.WordArray.create(combined.words.slice(4), combined.sigBytes - 16);
+
+        const decrypted = CryptoJS.AES.decrypt(
+            { ciphertext: ciphertext } as any,
+            AES_KEY,
+            {
+                iv: iv,
+                mode: CryptoJS.mode.CBC,
+                padding: CryptoJS.pad.Pkcs7
+            }
+        );
+
+        return JSON.parse(decrypted.toString(CryptoJS.enc.Utf8));
+    } catch (e) {
+        console.error("Decryption failed", e);
+        return null;
+    }
+};
+==========================================================================
+

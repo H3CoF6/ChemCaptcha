@@ -1,14 +1,22 @@
+/* src/App.tsx */
 import { useState, useEffect } from 'react';
-import { FiBox, FiActivity, FiLayers } from 'react-icons/fi';
+import { FiBox, FiActivity, FiLayers, FiSun, FiMoon } from 'react-icons/fi'; // 引入日月图标
 import styles from './App.module.scss';
 import GlassCard from '@/components/GlassCard';
 import CaptchaCanvas from '@/components/CaptchaCanvas';
+import Background from '@/components/Background';
 import './styles/global.scss';
-import { time } from "framer-motion";
 
 export default function App() {
     const [plugins, setPlugins] = useState<string[]>([]);
     const [activeSlug, setActiveSlug] = useState('random');
+    // 主题状态
+    const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+
+    useEffect(() => {
+        // 设置 data-theme 属性以控制 CSS 变量
+        document.documentElement.setAttribute('data-theme', theme);
+    }, [theme]);
 
     useEffect(() => {
         fetch('/api/captcha/list')
@@ -17,15 +25,16 @@ export default function App() {
             .catch(() => console.error("Failed to load plugins"));
     }, []);
 
+    const toggleTheme = () => {
+        setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+    };
+
     return (
         <>
-            {/* 1. 背景层：独立出来，自闭合，只负责发光 */}
-            <div
-                className="background-glow"
-                style={{'--bg-image-url': `url('https://t.alcy.cc/fj?time=${time.now()}')`} as never}
-            />
+            {/* 1. 新的动态背景 */}
+            <Background />
 
-            {/* 2. 内容层：作为兄弟元素，层级更高，不受模糊影响 */}
+            {/* 2. 内容层 */}
             <div className={styles.layout}>
 
                 {/* 左侧侧边栏 */}
@@ -33,6 +42,15 @@ export default function App() {
                     <div className={styles.brand}>
                         <FiActivity className={styles.logoIcon} />
                         <span>ChemShield</span>
+
+                        {/* 放在 brand 右侧的小主题开关 */}
+                        <div
+                            onClick={toggleTheme}
+                            style={{marginLeft: 'auto', cursor: 'pointer', display: 'flex'}}
+                            title="切换主题"
+                        >
+                            {theme === 'dark' ? <FiSun /> : <FiMoon />}
+                        </div>
                     </div>
 
                     <div className={`${styles.menu} scroll-container`}>
@@ -41,7 +59,7 @@ export default function App() {
                             className={`${styles.menuItem} ${activeSlug === 'random' ? styles.active : ''}`}
                             onClick={() => setActiveSlug('random')}
                         >
-                            <FiBox /> 随机测试 (Random)
+                            <FiBox /> 随机测试
                         </div>
 
                         <div className={styles.sectionTitle}>Modules</div>
@@ -59,7 +77,8 @@ export default function App() {
 
                 {/* 右侧主区域 */}
                 <main className={styles.mainContent}>
-                    <GlassCard className={styles.canvasWrapper}>
+                    {/* 开启 GlassCard 的 enableGlow */}
+                    <GlassCard className={styles.canvasWrapper} enableGlow={true}>
                         <CaptchaCanvas key={activeSlug} slug={activeSlug} />
                     </GlassCard>
                 </main>

@@ -11,7 +11,7 @@ def collect_python_files_content(output_filename="all_js_files.txt"):
         for root, _, files in os.walk('.'):  # 从当前目录（'.'）开始遍历
             for filename in files:
 
-                if filename.endswith('.js') or filename.endswith('.jsx')  or filename.endswith('.css') or filename.endswith('.ts') or filename.endswith('.tsx'):
+                if filename.endswith('.js') or filename.endswith('.jsx')  or filename.endswith('.css') or filename.endswith('.ts') or filename.endswith('.tsx') or filename.endswith('.scss'):
 
                     filepath = os.path.join(root, filename)
 

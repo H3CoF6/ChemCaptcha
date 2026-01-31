@@ -1,51 +1,52 @@
 /* src/styles/global.scss */
 :root {
-    --glass-bg: rgba(255, 255, 255, 0.05);
+    /* --- 浅色模式 (Light Mode) --- */
+    --bg-color: #f8f9fa;
+    --text-primary: #1a1a1a;
+    --text-secondary: #666666;
+    --glass-bg: rgba(255, 255, 255, 0.4);
+    --glass-border: rgba(255, 255, 255, 0.6);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    --accent-color: #0066ff;
+    --accent-glow: rgba(0, 102, 255, 0.4);
+    --error-color: #ff3355;
+    --success-color: #00cc88;
+
+    /* 背景光斑颜色 */
+    --blob-1: rgba(66, 135, 245, 0.3);
+    --blob-2: rgba(245, 66, 170, 0.25);
+    --blob-3: rgba(66, 245, 185, 0.25);
+}
+
+/* --- 深色模式 (Dark Mode) --- */
+[data-theme='dark'] {
+    --bg-color: #050505;
+    --text-primary: #e6e6e6;
+    --text-secondary: #a1a1a1;
+    --glass-bg: rgba(20, 20, 20, 0.4);
     --glass-border: rgba(255, 255, 255, 0.1);
-    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    --text-primary: #0017ff;
-    --text-secondary: #555555;
-    --accent-color: #0052f1; /* 赛博蓝 */
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    --accent-color: #00f2ff;
     --accent-glow: rgba(0, 242, 255, 0.5);
-    --error-color: #ff1144;
-    --success-color: #05ffa1;
+    --blob-1: rgba(0, 82, 241, 0.4);
+    --blob-2: rgba(144, 0, 255, 0.3);
+    --blob-3: rgba(0, 255, 161, 0.2);
 }
 
 body {
     margin: 0;
     padding: 0;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background-color: #050505;
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: var(--bg-color);
     color: var(--text-primary);
-    overflow: hidden; /* 防止滚动，全屏应用 */
+    overflow: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* 背景光晕动画 */
-.background-glow {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    /* z-index: -1;  <-- 删掉这个 -1，因为它可能被 body 背景盖住 */
-    z-index: 0;      /* 改为 0 */
-    pointer-events: none; /* 关键：让鼠标穿透背景，点击到下面的内容（虽然内容在上面，但以防万一） */
-
-    /* ... 渐变和 filter 保持不变 ... */
-    filter: blur(0px);
-    background-size: cover;
-    background: var(--bg-image-url) center;
-    transition: background-image 0.5s ease;
-}
-
-/* 滚动条隐藏但可滚 */
-.scroll-container::-webkit-scrollbar {
-    width: 4px;
-}
-.scroll-container::-webkit-scrollbar-track {
-    background: transparent;
-}
+/* 滚动条样式 */
+.scroll-container::-webkit-scrollbar { width: 4px; }
+.scroll-container::-webkit-scrollbar-track { background: transparent; }
 .scroll-container::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--glass-border);
     border-radius: 4px;
 }

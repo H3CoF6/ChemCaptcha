@@ -16,7 +16,7 @@ def generate_answer(mol: Chem.Mol, width: int, height: int) -> list:
     d2d = rdMolDraw2D.MolDraw2DCairo(width, height)
     d2d.DrawMolecule(mol)
 
-    chiral_centers = Chem.FindMolChiralCenters(mol, includeUnassigned=False)
+    chiral_centers = Chem.FindMolChiralCenters(mol, includeUnassigned=True)  # 2轮修复！！！
 
     for center_info in chiral_centers:
         atom_idx = center_info[0]
