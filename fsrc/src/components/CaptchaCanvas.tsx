@@ -30,8 +30,8 @@ export default function CaptchaCanvas({ slug }: Props) {
         try {
             // 兼容 Random 和 具体 Slug
             const url = slug === 'random'
-                ? '/api/captcha/random?width=600&height=450'
-                : `/api/captcha/${slug}/generate?width=600&height=450`;
+                ? '/api/captcha/random?width=800&height=600'
+                : `/api/captcha/${slug}/generate?width=800&height=600`;
 
             const res = await fetch(url);
             const json = await res.json();
@@ -108,7 +108,7 @@ export default function CaptchaCanvas({ slug }: Props) {
                 <p>{data?.prompt || "正在加载..."}</p>
             </div>
 
-            <div className={styles.stage} style={{ width: 600, height: 450 }}>
+            <div className={styles.stage} style={{ width: 800, height: 600 }}>
                 {loading && <div className={styles.loader}><FiLoader className={styles.spin} /></div>}
 
                 {!loading && data && (
