@@ -29,8 +29,7 @@ def is_point_in_polygon(x, y, poly_coords):
                         xin = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
                         if x <= xin:
                             inside = not inside
-                    if p1x == p2x:
-                        inside = not inside
+
         p1x, p1y = p2x, p2y
 
     return inside

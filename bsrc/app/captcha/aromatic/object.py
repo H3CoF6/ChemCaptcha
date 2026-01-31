@@ -28,7 +28,13 @@ class AromaticCaptcha(BaseCaptcha):
         """
         核心生成逻辑：读取Mol -> 绘图 -> 返回结果
         """
-        return base_draw(self.rdkit_object, width=self.width, height=self.height)
+        return {
+            "img_base64": base_draw(self.rdkit_object, width=self.width, height=self.height),
+            "size": {
+                "width": self.width,
+                "height": self.height
+            }
+        }
 
     def generate_answer(self) -> list:
         """
@@ -50,3 +56,10 @@ class AromaticCaptcha(BaseCaptcha):
 
     def get_metadata(self, mol: Chem.Mol) -> bool:
         return get_mol_value(mol)
+
+
+if __name__ == "__main__":
+    print(AromaticCaptcha(10,10,False).verify(
+        answer_data= [[[162.21356523740127, 181.44856945616326], [117.37579581191993, 207.33642709212245], [117.37579581191993, 259.11214236404084], [162.21356523740127, 285.0], [207.05651223440975, 259.11214236404084], [207.05651223440975, 207.33642709212245]]],
+        user_input= [{'x': 157, 'y': 225}]
+    ))

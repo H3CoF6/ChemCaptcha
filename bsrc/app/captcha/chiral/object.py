@@ -22,7 +22,13 @@ class ChiralCaptcha(BaseCaptcha):
         return db_init(self.table_name)
 
     def generate_img(self) -> dict:
-        return base_draw(self.rdkit_object, width=self.width, height=self.height)
+        return {
+            "img_base64":base_draw(self.rdkit_object, width=self.width, height=self.height),
+            "size": {
+                "width": self.width,
+                "height": self.height
+            }
+        }
 
     def generate_answer(self) -> list:
         return generate_answer(self.rdkit_object, width=self.width, height=self.height)
