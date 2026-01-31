@@ -1,7 +1,8 @@
 from .func import *
 from .db import *
 from app.captcha.base import BaseCaptcha
-from app.captcha.utils import *
+from app.captcha.utils import get_random_line_by_table_name, get_mol_info_by_path, construct_rdkit, base_verify
+from typing import Any
 
 
 class StericCaptcha(BaseCaptcha):

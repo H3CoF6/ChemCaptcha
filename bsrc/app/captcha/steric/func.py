@@ -6,7 +6,7 @@ from rdkit.Chem.Draw import rdMolDraw2D
 def draw_func(mol: Chem.rdchem.Mol, width: int, height: int) -> dict:
     b64_data = base_draw(mol, width, height)
     return {
-        "img_base64": f"data:image/png;base64,{b64_data}",
+        "img_base64": b64_data,
         "size": {
             "width": width,
             "height": height

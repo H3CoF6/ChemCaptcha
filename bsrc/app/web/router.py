@@ -11,6 +11,7 @@ from app.utils.config import AES_KEY
 from app.utils.logger import logger
 from app.utils.database import get_mol_by_page, get_table_count
 from pydantic import BaseModel
+import traceback
 
 router = APIRouter()
 
@@ -58,6 +59,7 @@ def _generate_logic(slug_name: str, width: int, height: int) -> CaptchaGenerateR
         )
     except Exception as e:
         logger.error(f"Error generating captcha for {slug_name}: {e}")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 

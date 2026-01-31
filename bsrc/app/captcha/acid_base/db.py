@@ -11,8 +11,8 @@ def db_init(table_name):
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 filename TEXT NOT NULL,
                 path TEXT NOT NULL,
-                best_acid_json TEXT,  -- 存储最强酸性基团的信息 {"name": "羧酸", "priority": 2}
-                best_base_json TEXT,  -- 存储最强碱性基团的信息
+                best_acid_json TEXT,  
+                best_base_json TEXT, 
                 processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
     """)
