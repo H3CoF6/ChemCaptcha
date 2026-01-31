@@ -8,13 +8,18 @@ class AromaticCaptcha(BaseCaptcha):
     slug = "aromatic"
     table_name = "aromatic"
 
-    def __init__(self, width, height, runtime = True):
+    def __init__(self, width, height, runtime = True, mol_path = ""):
         self.width = width
         self.height = height
 
         if runtime:
-            self.mol_info = get_random_line_by_table_name(table_name="aromatic")
-            self.mol_path = self.mol_info.get("path")
+            if mol_path == "":
+                self.mol_info = get_random_line_by_table_name(table_name="aromatic")
+                self.mol_path = self.mol_info.get("path")
+            else:
+                self.mol_path = mol_path
+                self.mol_info = get_mol_info_by_path(table_name="aromatic", path=mol_path)
+
             self.rdkit_object = construct_rdkit(self.mol_path)
 
     def get_table_schema(self) -> str:

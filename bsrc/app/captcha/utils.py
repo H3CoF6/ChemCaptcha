@@ -65,6 +65,10 @@ def get_random_line_by_table_name(table_name: str) -> Any:
     """获取数据库中，随机的 相应验证码"""
     return db.get_random_line(table_name)
 
+def get_mol_info_by_path(table_name: str, path: str ) -> Any:
+    """从文件路径查询runtime前录入的信息"""
+    return db.get_mol_info_by_path(table_name, path)
+
 
 def base_draw(mol: Chem.Mol, width, height):
     """点击区域类可使用，不适用于多次点击！！"""

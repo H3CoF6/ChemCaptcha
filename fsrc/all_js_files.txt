@@ -1,0 +1,869 @@
+============================eslint.config.js============================
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
+import { defineConfig, globalIgnores } from 'eslint/config'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.recommended,
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+    ],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+    },
+  },
+])
+
+==========================================================================
+
+============================vite.config.ts============================
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      }
+    }
+  }
+})
+==========================================================================
+
+============================src/App.module.scss============================
+.layout {
+  position: relative; /* 相对定位 */
+  z-index: 1;         /* 确保在背景 glow (z-index: 0) 之上 */
+  display: flex;
+  height: 100vh;
+  padding: 20px;
+  gap: 20px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.sidebar {
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+}
+
+.brand {
+  padding: 0 24px 20px;
+  font-size: 1.5rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--glass-border);
+  color: var(--text-primary);
+
+  .logoIcon { color: var(--accent-color); }
+}
+
+.menu {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 12px;
+}
+
+.sectionTitle {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  margin: 15px 12px 8px;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 4px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-secondary);
+
+  &:hover {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-primary);
+  }
+
+  &.active {
+    background: linear-gradient(90deg, rgba(0, 242, 255, 0.1), transparent);
+    border-left: 3px solid var(--accent-color);
+    color: var(--accent-color);
+    font-weight: 600;
+  }
+}
+
+.mainContent {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.canvasWrapper {
+  padding: 40px;
+  /* 可以在这里给个具体的最大宽度 */
+}
+==========================================================================
+
+============================src/App.tsx============================
+/* src/App.tsx */
+import { useState, useEffect } from 'react';
+import { FiBox, FiActivity, FiLayers, FiSun, FiMoon } from 'react-icons/fi'; // 引入日月图标
+import styles from './App.module.scss';
+import GlassCard from '@/components/GlassCard';
+import CaptchaCanvas from '@/components/CaptchaCanvas';
+import Background from '@/components/Background';
+import './styles/global.scss';
+
+export default function App() {
+    const [plugins, setPlugins] = useState<string[]>([]);
+    const [activeSlug, setActiveSlug] = useState('random');
+    // 主题状态
+    const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+
+    useEffect(() => {
+        // 设置 data-theme 属性以控制 CSS 变量
+        document.documentElement.setAttribute('data-theme', theme);
+    }, [theme]);
+
+    useEffect(() => {
+        fetch('/api/captcha/list')
+            .then(res => res.json())
+            .then(data => setPlugins(data))
+            .catch(() => console.error("Failed to load plugins"));
+    }, []);
+
+    const toggleTheme = () => {
+        setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+    };
+
+    return (
+        <>
+            {/* 1. 新的动态背景 */}
+            <Background />
+
+            {/* 2. 内容层 */}
+            <div className={styles.layout}>
+
+                {/* 左侧侧边栏 */}
+                <GlassCard className={styles.sidebar}>
+                    <div className={styles.brand}>
+                        <FiActivity className={styles.logoIcon} />
+                        <span>ChemCaptcha</span>
+
+                        {/* 放在 brand 右侧的小主题开关 */}
+                        <div
+                            onClick={toggleTheme}
+                            style={{marginLeft: 'auto', cursor: 'pointer', display: 'flex'}}
+                            title="切换主题"
+                        >
+                            {theme === 'dark' ? <FiSun /> : <FiMoon />}
+                        </div>
+                    </div>
+
+                    <div className={`${styles.menu} scroll-container`}>
+                        <div className={styles.sectionTitle}>Discovery</div>
+                        <div
+                            className={`${styles.menuItem} ${activeSlug === 'random' ? styles.active : ''}`}
+                            onClick={() => setActiveSlug('random')}
+                        >
+                            <FiBox /> Random
+                        </div>
+
+                        <div className={styles.sectionTitle}>Modules</div>
+                        {plugins.map(slug => (
+                            <div
+                                key={slug}
+                                className={`${styles.menuItem} ${activeSlug === slug ? styles.active : ''}`}
+                                onClick={() => setActiveSlug(slug)}
+                            >
+                                <FiLayers /> {slug.toUpperCase()}
+                            </div>
+                        ))}
+                    </div>
+                </GlassCard>
+
+                {/* 右侧主区域 */}
+                <main className={styles.mainContent}>
+                    {/* 开启 GlassCard 的 enableGlow */}
+                    <GlassCard className={styles.canvasWrapper} enableGlow={true}>
+                        <CaptchaCanvas key={activeSlug} slug={activeSlug} />
+                    </GlassCard>
+                </main>
+            </div>
+        </>
+    );
+}
+==========================================================================
+
+============================src/main.tsx============================
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.tsx'
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+        <App />
+    </React.StrictMode>,
+)
+==========================================================================
+
+============================src/components/CaptchaCanvas.module.scss============================
+.canvasContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 20px;
+  h1 { margin: 0; font-weight: 700; color: var(--accent-color); text-shadow: 0 0 10px var(--accent-glow); }
+  p { margin: 5px 0 0; font-size: 0.9rem; color: var(--text-secondary); }
+}
+
+.stage {
+  position: relative;
+  background: rgba(0,0,0,0.2);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px dashed var(--glass-border);
+  transition: border-color 0.3s;
+
+  &:hover {
+    border-color: var(--accent-color);
+  }
+}
+
+.captchaImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  cursor: crosshair;
+  user-select: none;
+}
+
+.marker {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background: var(--accent-color);
+  color: #000;
+  border-radius: 50%;
+  font-weight: bold;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%); /* 居中 */
+  cursor: pointer;
+  box-shadow: 0 0 10px var(--accent-color);
+  z-index: 10;
+}
+
+.resultOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(5px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.loader {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  .spin { animation: spin 1s linear infinite; font-size: 2rem; color: var(--accent-color); }
+}
+
+.footer {
+  margin-top: 20px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+}
+
+.btnPrimary {
+  background: var(--accent-color);
+  color: #000;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover:not(:disabled) { box-shadow: 0 0 15px var(--accent-glow); transform: translateY(-2px); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.btnIcon {
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  color: #fff;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover { background: rgba(255,255,255,0.1); }
+}
+
+@keyframes spin { 100% { transform: rotate(360deg); } }
+==========================================================================
+
+============================src/components/CaptchaCanvas.tsx============================
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import styles from './CaptchaCanvas.module.scss';
+import { encryptPayload, decryptPayload } from '@/utils/crypto';
+import { FiLoader, FiCheckCircle, FiXCircle, FiRefreshCw, FiTarget } from 'react-icons/fi';
+
+interface Point { x: number; y: number; id: number; }
+interface Props { slug: string; }
+
+export default function CaptchaCanvas({ slug }: Props) {
+    const [loading, setLoading] = useState(true);
+    const [data, setData] = useState<any>(null);
+    const [markers, setMarkers] = useState<Point[]>([]);
+    const [status, setStatus] = useState<'idle' | 'verifying' | 'success' | 'fail'>('idle');
+    const [msg, setMsg] = useState('');
+
+
+    const loadCaptcha = async () => {
+        setLoading(true);
+        setMarkers([]);
+        setStatus('idle');
+        setMsg('');
+        try {
+            const url = slug === 'random'
+                ? '/api/captcha/random?width=800&height=600'
+                : `/api/captcha/${slug}/generate?width=800&height=600`;
+            const res = await fetch(url);
+            const json = await res.json();
+            setData(json);
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (e) {
+            setMsg("连接服务器失败");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => { loadCaptcha(); }, [slug]);
+
+    const handleBgClick = (e: React.MouseEvent) => {
+        if (status !== 'idle') return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        setMarkers(prev => [...prev, { x, y, id: Date.now() }]);
+    };
+
+    const removeMarker = (e: React.MouseEvent, id: number) => {
+        e.stopPropagation();
+        if (status !== 'idle') return;
+        setMarkers(prev => prev.filter(m => m.id !== id));
+    };
+
+    // 自动刷新逻辑封装
+    const autoNext = (delay = 1500) => {
+        setTimeout(() => {
+            loadCaptcha();
+        }, delay);
+    };
+
+    const verify = async () => {
+        if (!data) return;
+        setStatus('verifying');
+
+        try {
+            const userInput = markers.map(m => ({ x: m.x, y: m.y }));
+            const payload = encryptPayload({
+                token: data.token,
+                user_input: userInput
+            });
+            const res = await fetch('/api/captcha/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: payload })
+            });
+            const resJson = await res.json();
+            const result = decryptPayload(resJson.data);
+
+            if (result && result.success) {
+                setStatus('success');
+                setMsg(result.message || "验证通过");
+                // 成功 -> 自动下一题
+                autoNext(1000);
+            } else {
+                setStatus('fail');
+                setMsg(result.message || "验证失败");
+                // 失败 -> 也自动下一题 (符合你的需求)
+                autoNext(1500);
+            }
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (e) {
+            setStatus('fail');
+            setMsg("系统错误");
+            autoNext(1500);
+        }
+    };
+
+    return (
+        <div className={styles.canvasContainer}>
+            <div className={styles.header}>
+                <h1>{slug.toUpperCase()} 验证</h1>
+                {/* 使用图标装饰 Prompt */}
+                <p><FiTarget style={{verticalAlign: 'middle', marginRight: 5}}/> {data?.prompt || "正在加载..."}</p>
+            </div>
+
+            <div className={styles.stage} style={{ width: 800, height: 600 }}>
+                {loading && <div className={styles.loader}><FiLoader className={styles.spin} /></div>}
+
+                {!loading && data && (
+                    <>
+                        <img
+                            src={`data:image/png;base64,${data.img_base64}`}
+                            className={styles.captchaImg}
+                            onClick={handleBgClick}
+                            alt="captcha"
+                        />
+
+                        <AnimatePresence>
+                            {markers.map((m, index) => (
+                                <motion.div
+                                    key={m.id}
+                                    className={styles.marker}
+                                    style={{ left: m.x-12, top: m.y-12 }} // 不知道什么bug，一直定位到左下角，暂时这样修一下，我要好好学前端！！！  // todo !!!
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    exit={{ scale: 0 }}
+                                    onClick={(e) => removeMarker(e, m.id)}
+                                    whileHover={{ scale: 1.2 }}
+                                >
+                                    {index + 1}
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
+
+                        {/* 结果层 */}
+                        <AnimatePresence>
+                            {status === 'success' && (
+                                <motion.div
+                                    className={styles.resultOverlay}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    // --- 添加这一行 ---
+                                    style={{ zIndex: 100 }}
+                                >
+                                    <FiCheckCircle size={80} color="var(--success-color)" />
+                                    <span style={{ color: 'var(--success-color)', marginTop: 10, fontWeight: 'bold' }}>VERIFIED</span>
+                                </motion.div>
+                            )}
+                            {status === 'fail' && (
+                                <motion.div
+                                    className={styles.resultOverlay}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    // --- 添加这一行 ---
+                                    style={{ zIndex: 100 }}
+                                >
+                                    <FiXCircle size={80} color="var(--error-color)" />
+                                    <span style={{ color: 'var(--error-color)', marginTop: 10, fontWeight: 'bold' }}>FAILED</span>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </>
+                )}
+            </div>
+
+            <div className={styles.footer}>
+                <div className={styles.statusText}>{msg}</div>
+                <div className={styles.actions}>
+                    <button className={styles.btnIcon} onClick={() => loadCaptcha()} title="换一张">
+                        <FiRefreshCw />
+                    </button>
+                    <button
+                        className={styles.btnPrimary}
+                        onClick={verify}
+                        disabled={status !== 'idle' || markers.length === 0}
+                    >
+                        {status === 'verifying' ? <FiLoader className={styles.spin}/> : 'Submit'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+==========================================================================
+
+============================src/components/GlassCard.module.scss============================
+/* src/components/GlassCard.module.scss */
+.card {
+  position: relative;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  box-shadow: var(--glass-shadow);
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+/* 鼠标跟随的高亮层 */
+.spotlight {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  transition: opacity 0.3s ease;
+}
+
+.content {
+  position: relative;
+  z-index: 2; /* 确保内容在光效之上 */
+  height: 100%; /* 继承高度 */
+}
+==========================================================================
+
+============================src/components/GlassCard.tsx============================
+/* src/components/GlassCard.tsx */
+import { useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from 'react';
+import { motion } from 'framer-motion';
+import styles from './GlassCard.module.scss';
+
+interface GlassCardProps {
+    children: ReactNode;
+    className?: string;
+    style?: CSSProperties;
+    // 开关是否启用3D光照效果
+    enableGlow?: boolean;
+}
+
+export default function GlassCard({ children, className = '', style = {}, enableGlow = true }: GlassCardProps) {
+    const cardRef = useRef<HTMLDivElement>(null);
+    const [cursor, setCursor] = useState({ x: 0, y: 0 });
+    const [opacity, setOpacity] = useState(0);
+
+    const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
+        if (!cardRef.current || !enableGlow) return;
+
+        const rect = cardRef.current.getBoundingClientRect();
+        setCursor({
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top,
+        });
+        setOpacity(1);
+    };
+
+    const handleMouseLeave = () => {
+        setOpacity(0);
+    };
+
+    return (
+        <motion.div
+            ref={cardRef}
+            className={`${styles.card} ${className}`}
+            style={style}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+        >
+            {/* Spotlight 光效层 */}
+            {enableGlow && (
+                <div
+                    className={styles.spotlight}
+                    style={{
+                        opacity,
+                        background: `radial-gradient(600px circle at ${cursor.x}px ${cursor.y}px, var(--glass-border), transparent 40%)`
+                    }}
+                />
+            )}
+
+            {/* 内容层，确保 z-index 高于光效 */}
+            <div className={styles.content}>
+                {children}
+            </div>
+        </motion.div>
+    );
+}
+==========================================================================
+
+============================src/components/Background/Background.module.scss============================
+/* src/components/Background/Background.module.scss */
+.container {
+  position: fixed;
+  inset: 0;
+  z-index: 0; /* 最底层 */
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.6;
+  animation: float 20s infinite ease-in-out alternate;
+}
+
+.blob1 {
+  top: -10%; left: -10%; width: 50vw; height: 50vw;
+  background: var(--blob-1);
+}
+.blob2 {
+  top: 20%; right: -20%; width: 40vw; height: 40vw;
+  background: var(--blob-2);
+  animation-delay: -5s;
+}
+.blob3 {
+  bottom: -10%; left: 20%; width: 60vw; height: 60vw;
+  background: var(--blob-3);
+  animation-delay: -10s;
+}
+
+.patternLayer {
+  position: absolute;
+  inset: 0;
+}
+
+.iconWrapper {
+  position: absolute;
+  color: var(--text-primary);
+  /* 确保图标不会阻挡任何潜在的交互（虽然这一层本来就在下面） */
+}
+
+@keyframes float {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(30px, 50px) scale(1.1); }
+}
+==========================================================================
+
+============================src/components/Background/index.tsx============================
+/* src/components/Background/index.tsx */
+import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { GiChemicalDrop, GiTestTubes, GiBubblingFlask, GiAtom } from 'react-icons/gi';
+import { TbFlask2 } from 'react-icons/tb';
+import { SlChemistry } from "react-icons/sl";
+import styles from './Background.module.scss';
+
+// 图标池
+const ICONS = [GiChemicalDrop, GiTestTubes, GiBubblingFlask, GiAtom, SlChemistry, TbFlask2];
+
+interface PatternItem {
+    id: number;
+    x: number;
+    y: number;
+    size: number;
+    rotate: number;
+    Icon: unknown;
+    delay: number;
+}
+
+export default function Background() {
+    const [patterns, setPatterns] = useState<PatternItem[]>([]);
+
+    useEffect(() => {
+        // 生成随机的化学背景图案
+        const count = 15; // 图标数量
+        const newPatterns: PatternItem[] = [];
+        for (let i = 0; i < count; i++) {
+            newPatterns.push({
+                id: i,
+                x: Math.random() * 100, // %
+                y: Math.random() * 100, // %
+                size: 30 + Math.random() * 100, // px
+                rotate: Math.random() * 360,
+                Icon: ICONS[Math.floor(Math.random() * ICONS.length)],
+                delay: Math.random() * 5
+            });
+        }
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setPatterns(newPatterns);
+    }, []);
+
+    return (
+        <div className={styles.container}>
+            {/* 1. 静态/动态光斑 (对应你的 PageBackground 需求) */}
+            <div className={`${styles.blob} ${styles.blob1}`} />
+            <div className={`${styles.blob} ${styles.blob2}`} />
+            <div className={`${styles.blob} ${styles.blob3}`} />
+
+            {/* 2. 化学结构式乱排层 */}
+            <div className={styles.patternLayer}>
+                {patterns.map((p) => (
+                    <motion.div
+                        key={p.id}
+                        className={styles.iconWrapper}
+                        style={{
+                            left: `${p.x}%`,
+                            top: `${p.y}%`,
+                            width: p.size,
+                            height: p.size,
+                            transform: `rotate(${p.rotate}deg)`,
+                        }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 0.08 }} // 极低透明度，仅作为纹理
+                        transition={{ duration: 1, delay: p.delay }}
+                    >
+                        <p.Icon size="100%" />
+                    </motion.div>
+                ))}
+            </div>
+        </div>
+    );
+}
+==========================================================================
+
+============================src/styles/global.scss============================
+/* src/styles/global.scss */
+:root {
+    /* --- 浅色模式 (Light Mode) --- */
+    --bg-color: #f8f9fa;
+    --text-primary: #1a1a1a;
+    --text-secondary: #666666;
+    --glass-bg: rgba(255, 255, 255, 0.4);
+    --glass-border: rgba(255, 255, 255, 0.6);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    --accent-color: #0066ff;
+    --accent-glow: rgba(0, 102, 255, 0.4);
+    --error-color: #ff3355;
+    --success-color: #00cc88;
+
+    /* 背景光斑颜色 */
+    --blob-1: rgba(66, 135, 245, 0.3);
+    --blob-2: rgba(245, 66, 170, 0.25);
+    --blob-3: rgba(66, 245, 185, 0.25);
+}
+
+/* --- 深色模式 (Dark Mode) --- */
+[data-theme='dark'] {
+    --bg-color: #050505;
+    --text-primary: #e6e6e6;
+    --text-secondary: #a1a1a1;
+    --glass-bg: rgba(20, 20, 20, 0.4);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    --accent-color: #00f2ff;
+    --accent-glow: rgba(0, 242, 255, 0.5);
+    --blob-1: rgba(0, 82, 241, 0.4);
+    --blob-2: rgba(144, 0, 255, 0.3);
+    --blob-3: rgba(0, 255, 161, 0.2);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    overflow: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* 滚动条样式 */
+.scroll-container::-webkit-scrollbar { width: 4px; }
+.scroll-container::-webkit-scrollbar-track { background: transparent; }
+.scroll-container::-webkit-scrollbar-thumb {
+    background: var(--glass-border);
+    border-radius: 4px;
+}
+==========================================================================
+
+============================src/utils/crypto.ts============================
+import CryptoJS from 'crypto-js';
+
+// todo  环境变量！！！
+const AES_KEY = CryptoJS.enc.Utf8.parse("1234567890987654");
+
+/**
+ * AES-CBC 加密 (对应 Python: aes_cbc_encrypt)
+ * 逻辑: 生成随机 IV -> 加密 -> 拼接 IV + 密文 -> Base64
+ */
+export const encryptPayload = (data: object): string => {
+    const jsonStr = JSON.stringify(data);
+    const iv = CryptoJS.lib.WordArray.random(16);
+
+    const encrypted = CryptoJS.AES.encrypt(jsonStr, AES_KEY, {
+        iv: iv,
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7
+    });
+    
+    const combined = iv.clone().concat(encrypted.ciphertext);
+    return CryptoJS.enc.Base64.stringify(combined);
+};
+
+/**
+ * AES-CBC 解密 (对应 Python: aes_cbc_decrypt)
+ * 逻辑: Base64解码 -> 提取前16字节为 IV -> 解密
+ */
+export const decryptPayload = (base64Str: string): any => {
+    try {
+        const combined = CryptoJS.enc.Base64.parse(base64Str);
+        const iv = CryptoJS.lib.WordArray.create(combined.words.slice(0, 4));
+        const ciphertext = CryptoJS.lib.WordArray.create(combined.words.slice(4), combined.sigBytes - 16);
+
+        const decrypted = CryptoJS.AES.decrypt(
+            { ciphertext: ciphertext } as any,
+            AES_KEY,
+            {
+                iv: iv,
+                mode: CryptoJS.mode.CBC,
+                padding: CryptoJS.pad.Pkcs7
+            }
+        );
+
+        return JSON.parse(decrypted.toString(CryptoJS.enc.Utf8));
+    } catch (e) {
+        console.error("Decryption failed", e);
+        return null;
+    }
+};
+==========================================================================
+

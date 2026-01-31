@@ -130,3 +130,42 @@ def eval_sql(sql_cmd: str, db_path: str = config.MOL_DB_PATH) -> Optional[List[A
         logger.error(f"Error eval SQL: {e}")
         return None
 
+
+
+def get_mol_info_by_path(table_name: str, path: str) -> Optional[Dict[str, Any]]:
+    """根据文件路径获取特定分子的信息"""
+    try:
+        with get_conn(config.MOL_DB_PATH) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT * FROM {table_name} WHERE path = ?", (path,))
+            result = cursor.fetchone()
+            return dict(result) if result else None
+    except Exception as e:
+        logger.error(f"Error getting mol by path from {table_name}: {e}")
+        return None
+
+
+def get_mol_by_page(table_name: str, page: int = 1, limit: int = 20) -> List[Dict[str, Any]]:
+    """分页获取分子列表 (只返回 id 和 path 以减少流量)"""
+    offset = (page - 1) * limit
+    try:
+        with get_conn(config.MOL_DB_PATH) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT id, path FROM {table_name} LIMIT ? OFFSET ?", (limit, offset))
+            return [dict(row) for row in cursor.fetchall()]
+    except Exception as e:
+        logger.error(f"Error paging {table_name}: {e}")
+        return []
+
+def get_table_count(table_name: str) -> int:
+    """获取表中总记录数"""
+    try:
+        with get_conn(config.MOL_DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+            return cursor.fetchone()[0]
+    except Exception as e:
+        logger.error(f"Error getting table count from {table_name}: {e}")
+        return 0
