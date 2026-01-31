@@ -46,8 +46,6 @@ export default function CaptchaCanvas({ slug }: Props) {
         }
     };
 
-    useEffect(() => { loadCaptcha(); }, [slug]);
-
     const fetchCatalog = async (pageNum: number) => {
         if (slug === 'random') return;
         try {
