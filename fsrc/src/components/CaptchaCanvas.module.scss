@@ -8,13 +8,61 @@
 .header {
   text-align: center;
   margin-bottom: 20px;
-  h1 { margin: 0; font-weight: 700; color: var(--accent-color); text-shadow: 0 0 10px var(--accent-glow); }
+  /* 确保 header 有相对定位上下文，虽然 headerRow 也有，但双重保险 */
+  position: relative;
+
   p { margin: 5px 0 0; font-size: 0.9rem; color: var(--text-secondary); }
+}
+
+/* 1. 修复 Header 布局 */
+.headerRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  min-height: 40px;
+  padding: 0 40px; /* 两侧留白防止遮挡标题 */
+
+  h1 {
+    margin: 0;
+    font-weight: 700;
+    color: var(--accent-color);
+    text-shadow: 0 0 10px var(--accent-glow);
+  }
+}
+
+/* 2. 目录按钮：改到左侧，且移除内联样式依赖 */
+.catalogBtn {
+  position: absolute;
+  left: -120px; /* --- 改为左侧 --- */
+  top: 50%;
+  transform: translateY(-50%);
+
+  /* 继承 btnIcon 的基础属性，但覆盖特定样式 */
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary); /* --- 修复：使用主题变量，适配黑/白模式 --- */
+  width: 45px;
+  height: 45px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 5;
+
+  &:hover {
+    background: var(--glass-bg);
+    color: var(--accent-color);
+  }
 }
 
 .stage {
   position: relative;
-  background: rgba(0,0,0,0.2);
+  /* --- 修复：不要写死黑色背景，使用变量 --- */
+  background: var(--glass-bg);
   border-radius: 16px;
   overflow: hidden;
   border: 1px dashed var(--glass-border);
@@ -38,14 +86,14 @@
   width: 24px;
   height: 24px;
   background: var(--accent-color);
-  color: #000;
+  color: #000; /* 标记内部数字保持黑色即可，或者用 #fff */
   border-radius: 50%;
   font-weight: bold;
   font-size: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transform: translate(-50%, -50%); /* 居中 */
+  transform: translate(-50%, -50%);
   cursor: pointer;
   box-shadow: 0 0 10px var(--accent-color);
   z-index: 10;
@@ -54,6 +102,7 @@
 .resultOverlay {
   position: absolute;
   inset: 0;
+  /* --- 修复：结果遮罩层稍微调亮一点在浅色模式下 --- */
   background: rgba(0,0,0,0.6);
   backdrop-filter: blur(5px);
   display: flex;
@@ -84,7 +133,7 @@
 
 .btnPrimary {
   background: var(--accent-color);
-  color: #000;
+  color: #000; /* 按钮文字颜色建议保持黑色以保证在亮色强调色上的对比度 */
   border: none;
   padding: 10px 24px;
   border-radius: 8px;
@@ -95,10 +144,11 @@
   &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
+/* 3. 通用图标按钮：修复浅色模式下看不见的问题 */
 .btnIcon {
   background: transparent;
   border: 1px solid var(--glass-border);
-  color: #fff;
+  color: var(--text-primary); /* --- 修复：原来是 #fff，现在改为变量 --- */
   width: 40px;
   height: 40px;
   border-radius: 8px;
@@ -107,7 +157,86 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
-  &:hover { background: rgba(255,255,255,0.1); }
+  &:hover { background: var(--glass-bg); }
 }
 
 @keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* 目录覆盖层 */
+.catalogOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  /* 使用 mix 混合背景色，保证适配 */
+  background: color-mix(in srgb, var(--bg-color), transparent 5%);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  color: var(--text-primary); /* 确保文字颜色适配 */
+}
+
+.catalogHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 10px;
+  h4 { margin: 0; }
+  .closeBtn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    &:hover { color: var(--error-color); }
+  }
+}
+
+.catalogGrid {
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  align-content: start;
+  padding-right: 5px;
+}
+
+.catalogItem {
+  border: 1px solid var(--glass-border);
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  word-break: break-all;
+  background: var(--glass-bg); /* --- 修复：使用玻璃背景 --- */
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  &:hover {
+    background: var(--accent-color);
+    color: #fff; /* hover时变白没问题，因为背景深 */
+    border-color: var(--accent-color);
+    .itemId { color: rgba(255,255,255,0.8); }
+  }
+}
+
+.itemId {
+  font-size: 0.7em;
+  color: var(--text-secondary);
+}
+
+.pagination {
+  margin-top: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}

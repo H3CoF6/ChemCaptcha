@@ -1,5 +1,6 @@
 import random
 import json
+from typing import Any
 from fastapi import APIRouter, HTTPException
 from app.captcha.plugins import PLUGINS
 from app.utils import config
@@ -8,6 +9,7 @@ from app.web.security import create_captcha_token, parse_captcha_token
 from app.captcha.utils import aes_cbc_encrypt, aes_cbc_decrypt
 from app.utils.config import AES_KEY
 from app.utils.logger import logger
+from app.utils.database import get_mol_by_page, get_table_count
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -20,18 +22,31 @@ DEFAULT_HEIGHT = 300
 class EncryptedPayload(BaseModel):
     data: str
 
+
+def captcha_util(s: str, plugin_class: Any, width: int, height: int, path = "") -> Any:
+    captcha = plugin_class(width=width, height=height, runtime=True, mol_path=path)
+    img_data = captcha.generate_img()
+    answer = captcha.generate_answer()
+    desc = captcha.generate_read_output()
+
+    token = create_captcha_token(s, answer)
+
+    return img_data, token, desc
+
+
+
 def _generate_logic(slug_name: str, width: int, height: int) -> CaptchaGenerateResponse:
     if slug_name not in PLUGINS:
         raise HTTPException(status_code=404, detail="Plugin not found")
 
     plugin_class = PLUGINS[slug_name]
     try:
-        captcha = plugin_class(width=width, height=height, runtime=True)
-        img_data = captcha.generate_img()
-        answer = captcha.generate_answer()
-        desc = captcha.generate_read_output()
-
-        token = create_captcha_token(slug_name, answer)
+        img_data, token, desc = captcha_util(
+            s = slug_name,
+            plugin_class = plugin_class,
+            width = width,
+            height = height,
+        )
 
         return CaptchaGenerateResponse(
             slug=slug_name,
@@ -94,6 +109,48 @@ if config.DEV_MOD:
             @router.get(f"/captcha/{s}/generate", response_model=CaptchaGenerateResponse)
             async def generate(width: int = DEFAULT_WIDTH, height: int = DEFAULT_HEIGHT):
                 return _generate_logic(s, width, height)
+
+            @router.get(f"/captcha/{s}/catalog")
+            async def get_catalog(page: int = 1, limit: int = 20):
+                plugin_class = PLUGINS[s]
+                if not hasattr(plugin_class, 'table_name'):
+                    raise HTTPException(status_code=400, detail="Plugin has no table_name")
+
+                table = plugin_class.table_name
+
+                items = get_mol_by_page(table, page, limit)
+                total = get_table_count(table)
+
+                return {
+                    "items": items,
+                    "total": total,
+                    "page": page,
+                    "limit": limit
+                }
+
+            @router.get(f"/captcha/{s}/generate_custom", response_model=CaptchaGenerateResponse)
+            async def generate_custom(path: str, width: int = DEFAULT_WIDTH, height: int = DEFAULT_HEIGHT):
+                plugin_class = PLUGINS[s]
+                try:
+                    img_data, token, desc = captcha_util(
+                        s = s,
+                        plugin_class = plugin_class,
+                        width = width,
+                        height = height,
+                        path = path,
+                    )
+
+                    return CaptchaGenerateResponse(
+                        slug=s,
+                        img_base64=img_data["img_base64"],
+                        width=img_data["size"]["width"],
+                        height=img_data["size"]["height"],
+                        prompt=desc,
+                        token=token
+                    )
+                except Exception as e:
+                    logger.error(f"Error generating custom captcha for {s}: {e}")
+                    raise HTTPException(status_code=500, detail=str(e))
 
 
         create_routes(slug)
