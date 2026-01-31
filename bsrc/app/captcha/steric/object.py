@@ -8,14 +8,18 @@ class StericCaptcha(BaseCaptcha):
     slug = "steric"
     table_name = "steric_hindrance"
 
-    def __init__(self, width, height, runtime=True):
+    def __init__(self, width, height, runtime=True, mol_path = ""):
         self.width = width
         self.height = height
 
         if runtime:
-            # 随机取一个有位阻特征的分子
-            self.mol_info = get_random_line_by_table_name(table_name=self.table_name)
-            self.mol_path = self.mol_info.get("path")
+            if mol_path == "":
+                self.mol_info = get_random_line_by_table_name(table_name="steric_hindrance")
+                self.mol_path = self.mol_info.get("path")
+            else:
+                self.mol_path = mol_path
+                self.mol_info = get_mol_info_by_path(table_name="steric_hindrance", path=mol_path)
+
             self.rdkit_object = construct_rdkit(self.mol_path)
 
             # 确定当前分子的最大位阻等级，用于生成提示文案

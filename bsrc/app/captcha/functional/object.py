@@ -9,15 +9,20 @@ class FunctionalCaptcha(BaseCaptcha):
     slug = "functional"
     table_name = "functional_groups"
 
-    def __init__(self, width, height, runtime=True):
+    def __init__(self, width, height, runtime=True, mol_path = ""):
         self.width = width
         self.height = height
         self.target_name = "未知结构"
         self.target_smarts = ""
 
         if runtime:
-            self.mol_info = get_random_line_by_table_name(table_name=self.table_name)
-            self.mol_path = self.mol_info.get("path")
+            if mol_path == "":
+                self.mol_info = get_random_line_by_table_name(table_name="functional_groups")
+                self.mol_path = self.mol_info.get("path")
+            else:
+                self.mol_path = mol_path
+                self.mol_info = get_mol_info_by_path(table_name="functional_groups", path=mol_path)
+
             self.rdkit_object = construct_rdkit(self.mol_path)
 
             groups_json = self.mol_info.get("groups_json")

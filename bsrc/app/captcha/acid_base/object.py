@@ -8,7 +8,7 @@ class AcidBaseCaptcha(BaseCaptcha):
     slug = "acid_base"
     table_name = "acid_base"
 
-    def __init__(self, width, height, runtime=True):
+    def __init__(self, width, height, runtime=True, mol_path = ""):
         self.width = width
         self.height = height
         self.mode = "none"  # acid 或 base
@@ -16,8 +16,13 @@ class AcidBaseCaptcha(BaseCaptcha):
         self.target_smarts = ""
 
         if runtime:
-            self.mol_info = get_random_line_by_table_name(table_name=self.table_name)
-            self.mol_path = self.mol_info.get("path")
+            if mol_path == "":
+                self.mol_info = get_random_line_by_table_name(table_name="acid_base")
+                self.mol_path = self.mol_info.get("path")
+            else:
+                self.mol_path = mol_path
+                self.mol_info = get_mol_info_by_path(table_name="acid_base", path=mol_path)
+
             self.rdkit_object = construct_rdkit(self.mol_path)
 
             # 解析数据库里的信息
