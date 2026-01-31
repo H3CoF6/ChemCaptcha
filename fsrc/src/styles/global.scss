@@ -1,0 +1,51 @@
+/* src/styles/global.scss */
+:root {
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    --text-primary: #0017ff;
+    --text-secondary: #555555;
+    --accent-color: #0052f1; /* 赛博蓝 */
+    --accent-glow: rgba(0, 242, 255, 0.5);
+    --error-color: #ff2a6d;
+    --success-color: #05ffa1;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #050505;
+    color: var(--text-primary);
+    overflow: hidden; /* 防止滚动，全屏应用 */
+}
+
+/* 背景光晕动画 */
+.background-glow {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    /* z-index: -1;  <-- 删掉这个 -1，因为它可能被 body 背景盖住 */
+    z-index: 0;      /* 改为 0 */
+    pointer-events: none; /* 关键：让鼠标穿透背景，点击到下面的内容（虽然内容在上面，但以防万一） */
+
+    /* ... 渐变和 filter 保持不变 ... */
+    filter: blur(0px);
+    background-size: cover;
+    background: var(--bg-image-url) center;
+    transition: background-image 0.5s ease;
+}
+
+/* 滚动条隐藏但可滚 */
+.scroll-container::-webkit-scrollbar {
+    width: 4px;
+}
+.scroll-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+.scroll-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
