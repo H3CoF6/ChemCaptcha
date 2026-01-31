@@ -41,7 +41,7 @@ export default function App() {
                 <GlassCard className={styles.sidebar}>
                     <div className={styles.brand}>
                         <FiActivity className={styles.logoIcon} />
-                        <span>ChemShield</span>
+                        <span>ChemCaptcha</span>
 
                         {/* 放在 brand 右侧的小主题开关 */}
                         <div
@@ -59,7 +59,7 @@ export default function App() {
                             className={`${styles.menuItem} ${activeSlug === 'random' ? styles.active : ''}`}
                             onClick={() => setActiveSlug('random')}
                         >
-                            <FiBox /> 随机测试
+                            <FiBox /> Random
                         </div>
 
                         <div className={styles.sectionTitle}>Modules</div>

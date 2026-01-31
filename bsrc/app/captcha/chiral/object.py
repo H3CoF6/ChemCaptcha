@@ -1,7 +1,7 @@
 from .func import generate_answer
 from .db import db_init, get_mol_value
 from app.captcha.base import BaseCaptcha
-from app.captcha.utils import construct_rdkit, base_draw, base_verify, get_random_line_by_table_name
+from app.captcha.utils import *
 from rdkit import Chem
 from typing import Any
 
@@ -9,13 +9,18 @@ class ChiralCaptcha(BaseCaptcha):
     slug = "chiral"
     table_name = "chiral"
 
-    def __init__(self, width, height, runtime = True):
+    def __init__(self, width, height, runtime = True, mol_path = ""):
         self.width = width
         self.height = height
 
         if runtime:
-            self.mol_info = get_random_line_by_table_name(table_name="chiral")
-            self.mol_path = self.mol_info.get("path")
+            if mol_path == "":
+                self.mol_info = get_random_line_by_table_name(table_name="chiral")
+                self.mol_path = self.mol_info.get("path")
+            else:
+                self.mol_path = mol_path
+                self.mol_info = get_mol_info_by_path(table_name="chiral", path=mol_path)
+
             self.rdkit_object = construct_rdkit(self.mol_path)
 
     def get_table_schema(self) -> str:
