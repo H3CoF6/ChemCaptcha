@@ -1,11 +1,9 @@
-/* src/components/CaptchaCanvas.tsx */
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './CaptchaCanvas.module.scss';
 import { encryptPayload, decryptPayload } from '@/utils/crypto';
 import { FiLoader, FiCheckCircle, FiXCircle, FiRefreshCw, FiTarget } from 'react-icons/fi';
 
-// ... Points 接口保持不变 ...
 interface Point { x: number; y: number; id: number; }
 interface Props { slug: string; }
 
@@ -16,7 +14,6 @@ export default function CaptchaCanvas({ slug }: Props) {
     const [status, setStatus] = useState<'idle' | 'verifying' | 'success' | 'fail'>('idle');
     const [msg, setMsg] = useState('');
 
-    // 使用 useRef 防止闭包陷阱，如果需要的话 (这里主要用 state 即可)
 
     const loadCaptcha = async () => {
         setLoading(true);
@@ -40,7 +37,6 @@ export default function CaptchaCanvas({ slug }: Props) {
 
     useEffect(() => { loadCaptcha(); }, [slug]);
 
-    // 点击背景添加标记
     const handleBgClick = (e: React.MouseEvent) => {
         if (status !== 'idle') return;
         const rect = e.currentTarget.getBoundingClientRect();
@@ -102,7 +98,7 @@ export default function CaptchaCanvas({ slug }: Props) {
     return (
         <div className={styles.canvasContainer}>
             <div className={styles.header}>
-                <h3>{slug.toUpperCase()} 验证</h3>
+                <h1>{slug.toUpperCase()} 验证</h1>
                 {/* 使用图标装饰 Prompt */}
                 <p><FiTarget style={{verticalAlign: 'middle', marginRight: 5}}/> {data?.prompt || "正在加载..."}</p>
             </div>
@@ -180,7 +176,7 @@ export default function CaptchaCanvas({ slug }: Props) {
                         onClick={verify}
                         disabled={status !== 'idle' || markers.length === 0}
                     >
-                        {status === 'verifying' ? <FiLoader className={styles.spin}/> : '提交验证'}
+                        {status === 'verifying' ? <FiLoader className={styles.spin}/> : 'Submit'}
                     </button>
                 </div>
             </div>
