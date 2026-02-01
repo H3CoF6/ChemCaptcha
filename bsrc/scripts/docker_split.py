@@ -30,7 +30,7 @@ def process_split_task():
     """
     target_file_name = os.getenv("FILE_NAME", "default.sdf")
 
-    input_file = os.path.join(config.MOL_DIR, target_file_name)
+    input_file = os.path.join(config.SDF_DIR, target_file_name)
     output_dir = config.MOL_DIR
 
     if not os.path.exists(input_file):
