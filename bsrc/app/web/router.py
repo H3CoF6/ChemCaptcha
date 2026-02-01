@@ -9,16 +9,13 @@ from app.web.schemas import CaptchaGenerateResponse
 from app.web.security import create_captcha_token, parse_captcha_token
 from app.captcha.utils import aes_cbc_encrypt, aes_cbc_decrypt
 from app.utils.config import FRONT_AES_KEY
+from app.utils.config import DEFAULT_WIDTH, DEFAULT_HEIGHT
 from app.utils.logger import logger
 from app.utils.database import get_mol_by_page, get_table_count
 from pydantic import BaseModel
 import traceback
 
 router = APIRouter()
-
-DEFAULT_WIDTH = 400
-DEFAULT_HEIGHT = 300
-
 
 
 class EncryptedPayload(BaseModel):
@@ -33,7 +30,10 @@ def captcha_util(s: str, plugin_class: Any, width: int, height: int, path = "") 
     path = getattr(captcha, 'mol_path')  # 我不该用getattr的！！ 我忏悔  [哭]
     desc = captcha.generate_read_output()
 
-    token = create_captcha_token(s, path, width, height)
+    smart = getattr(captcha, 'target_smarts') or ""
+
+
+    token = create_captcha_token(s, path, width, height, smart)
 
     return img_data, token, desc
 
@@ -97,6 +97,10 @@ def _verify_logic(encrypted_data: str) -> dict:
 
         plugin_class = PLUGINS[slug_name]
         captcha = plugin_class(token_data.get("w"), token_data.get("h"), mol_path=token_data.get("p"))
+
+        if token_data.get("sm"):  # 可选项不为空
+            captcha.target_smarts = token_data.get("sm")
+            # print(captcha.target_smarts)  # debug !!!
 
         answer_data = captcha.generate_answer()
 

@@ -29,7 +29,7 @@ class FunctionalCaptcha(BaseCaptcha):
             if groups_json:
                 available_groups = json.loads(groups_json)
                 self.target_name = random.choice(available_groups)
-                self.target_smarts = FUNCTIONAL_GROUPS.get(self.target_name)
+                self.target_smarts = FUNCTIONAL_GROUPS.get(self.target_name)  # 这里必须要要要规范命名！！！  不然验证有bug!!!
             else:
                 logger.warning(f"Molecule {self.mol_path} has no groups in DB.")
                 self.target_name = "任意原子"
