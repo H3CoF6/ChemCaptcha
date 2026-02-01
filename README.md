@@ -88,13 +88,13 @@
 
 ### 项目截图
 
-| 前端整体![image-20260201230142723](C:\Users\17078\AppData\Roaming\Typora\typora-user-images\image-20260201230142723.png) |
+| 前端整体![image-20260201230142723](.\img\image-20260201230142723.png) |
 | ------------------------------------------------------------ |
-| **点选验证码**![image-20260201230215264](C:\Users\17078\AppData\Roaming\Typora\typora-user-images\image-20260201230215264.png) |
-| **正确答案展示**![image-20260201230239233](C:\Users\17078\AppData\Roaming\Typora\typora-user-images\image-20260201230239233.png) |
-| **多种验证码可选（最长碳链）**![image-20260201230313814](C:\Users\17078\AppData\Roaming\Typora\typora-user-images\image-20260201230313814.png) |
-| **验证码题库选择**![image-20260201230428179](C:\Users\17078\AppData\Roaming\Typora\typora-user-images\image-20260201230428179.png) |
-| **rich输出：初始化脚本**![image-20260201230551021](C:\Users\17078\AppData\Roaming\Typora\typora-user-images\image-20260201230551021.png) |
+| **点选验证码**![image-20260201230215264](.\img\image-20260201230215264.png) |
+| **正确答案展示**![image-20260201230239233](.\img\image-20260201230239233.png) |
+| **多种验证码可选（最长碳链）**![image-20260201230313814](.\img\image-20260201230313814.png) |
+| **验证码题库选择**![image-20260201230428179](.\img\image-20260201230428179.png) |
+| **rich输出：初始化脚本**![image-20260201230551021](.\img\image-20260201230551021.png) |
 
 
 
