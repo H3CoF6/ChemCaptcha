@@ -14,7 +14,8 @@ def draw_func(mol: Chem.rdchem.Mol, width: int, height: int) -> dict:
     }
 
 
-def generate_answer_coords(mol: Chem.Mol, width: int, height: int, target_smarts: str) -> list:
+def hb_generate_answer_coords(mol: Chem.Mol, width: int, height: int, target_smarts: str) -> list:
+    """避免重复命名"""
     pattern = Chem.MolFromSmarts(target_smarts)
     matches = mol.GetSubstructMatches(pattern)
 

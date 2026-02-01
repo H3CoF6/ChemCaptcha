@@ -23,8 +23,6 @@ class StericCaptcha(BaseCaptcha):
 
             self.rdkit_object = construct_rdkit(self.mol_path)
 
-            # 确定当前分子的最大位阻等级，用于生成提示文案
-            # 虽然 db 里存了，但为了保险（防止数据不一致），运行时再算一次也无妨
             self.max_degree = self.mol_info.get("max_degree")
 
     def get_table_schema(self) -> str:

@@ -50,7 +50,7 @@ class HBondCaptcha(BaseCaptcha):
         return draw_func(self.rdkit_object, width=self.width, height=self.height)
 
     def generate_answer(self) -> list:
-        return generate_answer_coords(
+        return hb_generate_answer_coords(
             self.rdkit_object,
             width=self.width,
             height=self.height,
@@ -59,9 +59,9 @@ class HBondCaptcha(BaseCaptcha):
 
     def generate_read_output(self) -> str:
         if self.mode == "donor":
-            return "请点击所有的【氢键供体】(H-Bond Donors)\n提示：连有H的N或O原子"
+            return "请点击所有的【氢键供体】(H-Bond Donors)"
         elif self.mode == "acceptor":
-            return "请点击所有的【氢键受体】(H-Bond Acceptors)\n提示：所有的N或O原子"
+            return "请点击所有的【氢键受体】(H-Bond Acceptors)"
         else:
             return "加载失败"
 

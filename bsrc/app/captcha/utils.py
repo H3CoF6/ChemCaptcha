@@ -187,7 +187,7 @@ def draw_func(mol: Chem.rdchem.Mol, width: int, height: int) -> dict:
     }
 
 
-def generate_answer_coords(mol: Chem.Mol, width: int, height: int, target_smarts: str) -> list:
+def generate_answer_coords(mol: Chem.Mol, width: int, height: int, target_smarts: str, delta: int = 20) -> list:
     pattern = Chem.MolFromSmarts(target_smarts)
     matches = mol.GetSubstructMatches(pattern)
 
@@ -197,11 +197,10 @@ def generate_answer_coords(mol: Chem.Mol, width: int, height: int, target_smarts
 
     for match_indices in matches:
 
-        polygon = []
         for atom_idx in match_indices:
             p = d2d.GetDrawCoords(atom_idx)
-            polygon.append((p.x, p.y))
 
-        valid_polygons.append(polygon)
+            polygon = point_to_s(p, delta)
+            valid_polygons.append(polygon)
 
     return valid_polygons
