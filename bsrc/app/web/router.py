@@ -30,7 +30,7 @@ def captcha_util(s: str, plugin_class: Any, width: int, height: int, path = "") 
     path = getattr(captcha, 'mol_path')  # 我不该用getattr的！！ 我忏悔  [哭]
     desc = captcha.generate_read_output()
 
-    smart = getattr(captcha, 'target_smarts') or ""
+    smart = getattr(captcha, 'target_smarts', "")
 
 
     token = create_captcha_token(s, path, width, height, smart)
