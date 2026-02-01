@@ -33,7 +33,7 @@ def captcha_util(s: str, plugin_class: Any, width: int, height: int, path = "") 
     path = getattr(captcha, 'mol_path')  # 我不该用getattr的！！ 我忏悔  [哭]
     desc = captcha.generate_read_output()
 
-    token = create_captcha_token(s, path)
+    token = create_captcha_token(s, path, width, height)
 
     return img_data, token, desc
 
@@ -62,6 +62,7 @@ def _generate_logic(slug_name: str, width: int, height: int) -> CaptchaGenerateR
         )
     except Exception as e:
         logger.error(f"Error generating captcha for {slug_name}: {e}")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
@@ -84,7 +85,7 @@ def _verify_logic(encrypted_data: str) -> dict:
         if not token_data or not token_data.get("p"):
             return {"success": False, "message": "Token invalid"}
 
-        if int(time.time() - token.get("t") > config.EXPIRED_TIME):
+        if int(time.time() - token_data.get("t") > config.EXPIRED_TIME):
             return {"success": False, "message": "Token expired"}
 
         slug_name = token_data.get("s")
@@ -95,7 +96,7 @@ def _verify_logic(encrypted_data: str) -> dict:
 
 
         plugin_class = PLUGINS[slug_name]
-        captcha = plugin_class(DEFAULT_WIDTH, DEFAULT_HEIGHT, mol_path=token_data.get("p"))
+        captcha = plugin_class(token_data.get("w"), token_data.get("h"), mol_path=token_data.get("p"))
 
         answer_data = captcha.generate_answer()
 

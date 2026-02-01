@@ -5,7 +5,7 @@ from app.captcha.utils import aes_cbc_encrypt, aes_cbc_decrypt
 from app.utils.config import TOKEN_AES_KEY
 from app.utils.logger import logger
 
-def create_captcha_token(slug: str, path: str) -> str:
+def create_captcha_token(slug: str, path: str, width: int, height: int) -> str:
     """
     将插件类型和答案数据打包加密成 Token
     """
@@ -14,6 +14,8 @@ def create_captcha_token(slug: str, path: str) -> str:
         "p": path,
         "t": int(time.time()),  # gemini实现太抽象了，我自己写一个！！
         "u": str(uuid.uuid4()),  # 后续扩展可能用到！！
+        "w": width,
+        "h": height,
     }
     json_str = json.dumps(payload)
     return aes_cbc_encrypt(json_str, TOKEN_AES_KEY)
