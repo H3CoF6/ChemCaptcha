@@ -9,6 +9,12 @@ from app.utils.logger import logger
 from app.web.router import router as captcha_router
 from app.utils import config
 from app.utils.config import DIST_DIR
+import mimetypes
+
+"""神奇的bug"""
+
+mimetypes.add_type("text/css", ".css")
+mimetypes.add_type("application/javascript", ".js")
 
 def create_app() -> FastAPI:
     my_app = FastAPI(
@@ -38,9 +44,9 @@ def create_app() -> FastAPI:
     if os.path.exists(DIST_DIR):
         my_app.mount("/assets", StaticFiles(directory=os.path.join(DIST_DIR, "assets")), name="assets")
 
-        @my_app.get("/favicon.ico")
+        @my_app.get("/vite.svg")
         async def favicon():
-            return FileResponse(os.path.join(DIST_DIR, "favicon.ico"))
+            return FileResponse(os.path.join(DIST_DIR, "vite.svg"))
 
         @my_app.get("/{full_path:path}")
         async def serve_react_app(full_path: str):

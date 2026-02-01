@@ -1,5 +1,5 @@
 /* src/components/Background/index.tsx */
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { GiChemicalDrop, GiTestTubes, GiBubblingFlask, GiAtom } from 'react-icons/gi';
 import { TbFlask2 } from 'react-icons/tb';
@@ -15,7 +15,7 @@ interface PatternItem {
     y: number;
     size: number;
     rotate: number;
-    Icon: unknown;
+    Icon: React.ElementType;
     delay: number;
 }
 
