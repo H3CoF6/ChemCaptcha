@@ -8,7 +8,7 @@ from app.utils import config
 from app.web.schemas import CaptchaGenerateResponse
 from app.web.security import create_captcha_token, parse_captcha_token
 from app.captcha.utils import aes_cbc_encrypt, aes_cbc_decrypt
-from app.utils.config import AES_KEY
+from app.utils.config import FRONT_AES_KEY
 from app.utils.logger import logger
 from app.utils.database import get_mol_by_page, get_table_count
 from pydantic import BaseModel
@@ -73,7 +73,7 @@ def _verify_logic(encrypted_data: str) -> dict:
     3. 返回加密后的结果
     """
     try:
-        json_str = aes_cbc_decrypt(encrypted_data, AES_KEY)
+        json_str = aes_cbc_decrypt(encrypted_data, FRONT_AES_KEY)
         payload = json.loads(json_str)
 
         token = payload.get("token")   # 里面已经没有答案了
@@ -100,7 +100,7 @@ def _verify_logic(encrypted_data: str) -> dict:
         answer_data = captcha.generate_answer()
 
         is_valid = captcha.verify(answer_data, user_input)
-        
+
         logger.info(f"answer: {answer_data}")
         logger.info(f"user_input: {user_input}")
 
@@ -199,6 +199,6 @@ async def verify_encrypted(payload: EncryptedPayload):
 
     # 加密响应
     result_json = json.dumps(result_dict)
-    encrypted_response = aes_cbc_encrypt(result_json, AES_KEY)
+    encrypted_response = aes_cbc_encrypt(result_json, FRONT_AES_KEY)
 
     return {"data": encrypted_response}

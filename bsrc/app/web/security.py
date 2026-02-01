@@ -2,7 +2,7 @@ import json
 import time
 import uuid
 from app.captcha.utils import aes_cbc_encrypt, aes_cbc_decrypt
-from app.utils.config import AES_KEY
+from app.utils.config import TOKEN_AES_KEY
 from app.utils.logger import logger
 
 def create_captcha_token(slug: str, path: str) -> str:
@@ -16,14 +16,14 @@ def create_captcha_token(slug: str, path: str) -> str:
         "u": str(uuid.uuid4()),  # 后续扩展可能用到！！
     }
     json_str = json.dumps(payload)
-    return aes_cbc_encrypt(json_str, AES_KEY)
+    return aes_cbc_encrypt(json_str, TOKEN_AES_KEY)
 
 def parse_captcha_token(token: str) -> dict:
     """
     解密 Token 获取插件类型和答案
     """
     try:
-        json_str = aes_cbc_decrypt(token, AES_KEY)
+        json_str = aes_cbc_decrypt(token, TOKEN_AES_KEY)
         return json.loads(json_str)
     except Exception as e:
         logger.error(f"Token decryption failed: {e}")
