@@ -22,6 +22,7 @@ DATABASE_DIR = os.path.join(CURRENT_DIR, "..", "..", "data", "db")
 LOG_PATH = os.path.join(CURRENT_DIR, "..", "..", "data", "log")
 MOL_DB_PATH = os.path.join(DATABASE_DIR, "mol.db")
 FONT_DIR = os.path.join(CURRENT_DIR, "..", "..", "data", "fonts")
+DIST_DIR = os.path.join(CURRENT_DIR, "..", "static")
 
 # 日志等级
 TERMINAL_LOG_LEVEL = "INFO"
