@@ -93,9 +93,14 @@ def _verify_logic(encrypted_data: str) -> dict:
         logger.info(f"answer: {answer_data}")
         logger.info(f"user_input: {user_input}")
 
+        # 加入正确答案的返回！！
         if is_valid:
+            if config.DEV_MOD:
+                return {"success": True, "message": "Verification passed", "answer": answer_data}
             return {"success": True, "message": "Verification passed"}
         else:
+            if config.DEV_MOD:
+                return {"success": False, "message": "Verification failed", "answer": answer_data}
             return {"success": False, "message": "Verification failed"}
 
     except Exception as e:
