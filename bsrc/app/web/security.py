@@ -1,15 +1,19 @@
 import json
+import time
+import uuid
 from app.captcha.utils import aes_cbc_encrypt, aes_cbc_decrypt
 from app.utils.config import AES_KEY
 from app.utils.logger import logger
 
-def create_captcha_token(slug: str, answer_data: list) -> str:
+def create_captcha_token(slug: str, path: str) -> str:
     """
     将插件类型和答案数据打包加密成 Token
     """
     payload = {
         "s": slug,
-        "a": answer_data
+        "p": path,
+        "t": int(time.time()),  # gemini实现太抽象了，我自己写一个！！
+        "u": str(uuid.uuid4()),  # 后续扩展可能用到！！
     }
     json_str = json.dumps(payload)
     return aes_cbc_encrypt(json_str, AES_KEY)

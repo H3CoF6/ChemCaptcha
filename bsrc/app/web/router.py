@@ -1,5 +1,6 @@
 import random
 import json
+import time
 from typing import Any
 from fastapi import APIRouter, HTTPException
 from app.captcha.plugins import PLUGINS
@@ -27,10 +28,12 @@ class EncryptedPayload(BaseModel):
 def captcha_util(s: str, plugin_class: Any, width: int, height: int, path = "") -> Any:
     captcha = plugin_class(width=width, height=height, runtime=True, mol_path=path)
     img_data = captcha.generate_img()
-    answer = captcha.generate_answer()
+    # answer = captcha.generate_answer()  #  gemini不知道为什么想的要这样写？？
+
+    path = getattr(captcha, 'mol_path')  # 我不该用getattr的！！ 我忏悔  [哭]
     desc = captcha.generate_read_output()
 
-    token = create_captcha_token(s, answer)
+    token = create_captcha_token(s, path)
 
     return img_data, token, desc
 
@@ -59,7 +62,6 @@ def _generate_logic(slug_name: str, width: int, height: int) -> CaptchaGenerateR
         )
     except Exception as e:
         logger.error(f"Error generating captcha for {slug_name}: {e}")
-        traceback.print_exc()
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
@@ -74,22 +76,31 @@ def _verify_logic(encrypted_data: str) -> dict:
         json_str = aes_cbc_decrypt(encrypted_data, AES_KEY)
         payload = json.loads(json_str)
 
-        token = payload.get("token")
+        token = payload.get("token")   # 里面已经没有答案了
         user_input = payload.get("user_input")
 
         token_data = parse_captcha_token(token)
-        if not token_data:
-            return {"success": False, "message": "Token expired or invalid"}
+
+        if not token_data or not token_data.get("p"):
+            return {"success": False, "message": "Token invalid"}
+
+        if int(time.time() - token.get("t") > config.EXPIRED_TIME):
+            return {"success": False, "message": "Token expired"}
 
         slug_name = token_data.get("s")
-        answer_data = token_data.get("a")
+        # answer_data = token_data.get("a")
 
         if slug_name not in PLUGINS:
             return {"success": False, "message": "Unknown captcha type"}
 
+
         plugin_class = PLUGINS[slug_name]
-        captcha = plugin_class(DEFAULT_WIDTH, DEFAULT_HEIGHT, runtime=False)
+        captcha = plugin_class(DEFAULT_WIDTH, DEFAULT_HEIGHT, mol_path=token_data.get("p"))
+
+        answer_data = captcha.generate_answer()
+
         is_valid = captcha.verify(answer_data, user_input)
+        
         logger.info(f"answer: {answer_data}")
         logger.info(f"user_input: {user_input}")
 
@@ -105,6 +116,7 @@ def _verify_logic(encrypted_data: str) -> dict:
 
     except Exception as e:
         logger.error(f"Decryption/Verify error: {e}")
+        traceback.print_exc()
         return {"success": False, "message": "Security check failed"}
 
 

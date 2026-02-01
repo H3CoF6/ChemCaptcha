@@ -14,6 +14,9 @@ FONT_NAME = "ComicNeue-Bold.ttf" # 不启用则留空
 DEFAULT_WIDTH = 800
 DEFAULT_HEIGHT = 600
 
+# 有效期  // 2 min
+EXPIRED_TIME = 120
+
 # 路径配置
 CURRENT_DIR = os.path.dirname(__file__)
 MOL_DIR = os.path.join(CURRENT_DIR, "..", "..", "data", "mol")
