@@ -6,6 +6,10 @@ import { FiLoader, FiCheckCircle, FiXCircle, FiRefreshCw, FiTarget, FiMenu, FiCh
 interface Point { x: number; y: number; id: number; }
 interface Props { slug: string; }
 
+
+type Polygon = [number, number][];   // 预期答案区域
+
+
 export default function CaptchaCanvas({ slug }: Props) {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<any>(null);
@@ -19,6 +23,8 @@ export default function CaptchaCanvas({ slug }: Props) {
     const [page, setPage] = useState(1);
     const LIMIT = 20;
 
+    const [correctAnswers, setCorrectAnswers] = useState<Polygon[]>([]);
+
     useEffect(() => {
         setShowCatalog(false);
         setPage(1);
@@ -29,6 +35,7 @@ export default function CaptchaCanvas({ slug }: Props) {
     const loadCaptcha = async () => {
         setLoading(true);
         setMarkers([]);
+        setCorrectAnswers([]);
         setStatus('idle');
         setMsg('');
         try {
@@ -64,6 +71,7 @@ export default function CaptchaCanvas({ slug }: Props) {
     const loadSpecific = async (path: string) => {
         setLoading(true);
         setMarkers([]);
+        setCorrectAnswers([]); // 重置答案
         setStatus('idle');
         setMsg('');
         setShowCatalog(false); // 选中后关闭目录
@@ -127,8 +135,14 @@ export default function CaptchaCanvas({ slug }: Props) {
             } else {
                 setStatus('fail');
                 setMsg(result.message || "验证失败");
-                // 失败 -> 也自动下一题 (符合你的需求)
-                autoNext(1500);
+                // 显示答案
+                if (result.answer && Array.isArray(result.answer)) {
+                    setCorrectAnswers(result.answer);
+                    // 如果显示了答案，给用户更多时间（例如 4秒）去查看，而不是 1.5秒就跳过
+                    autoNext(4000);
+                } else {
+                    autoNext(1500);
+                }
             }
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
@@ -137,6 +151,18 @@ export default function CaptchaCanvas({ slug }: Props) {
             autoNext(1500);
         }
     };
+
+    const getPointsString = (points: number[][]) => {
+        return points.map(p => `${p[0]},${p[1]}`).join(' ');
+    };
+
+    const getCenterPoint = (points: number[][]) => {
+        if (points.length === 0) return { x: 0, y: 0 };
+        const x = points.reduce((sum, p) => sum + p[0], 0) / points.length;
+        const y = points.reduce((sum, p) => sum + p[1], 0) / points.length;
+        return { x, y };
+    };
+
 
     return (
         <div className={styles.canvasContainer}>
@@ -172,6 +198,34 @@ export default function CaptchaCanvas({ slug }: Props) {
                             onClick={handleBgClick}
                             alt="captcha"
                         />
+
+                        {status === 'fail' && correctAnswers.length > 0 && (
+                            <svg className={styles.answerLayer} viewBox="0 0 800 600">
+                                {correctAnswers.map((polygon, index) => {
+                                    const center = getCenterPoint(polygon);
+                                    return (
+                                        <g key={index} className={styles.answerGroup}>
+                                            <polygon
+                                                points={getPointsString(polygon)}
+                                                className={styles.answerPolygon}
+                                            />
+                                            {/* 序号背景圈 */}
+                                            <circle cx={center.x} cy={center.y} r="10" fill="var(--success-color)" />
+                                            {/* 序号文字 */}
+                                            <text
+                                                x={center.x}
+                                                y={center.y}
+                                                dy="4" // 微调垂直居中
+                                                textAnchor="middle"
+                                                className={styles.answerIndex}
+                                            >
+                                                {index + 1}
+                                            </text>
+                                        </g>
+                                    );
+                                })}
+                            </svg>
+                        )}
 
                         <AnimatePresence>
                             {markers.map((m, index) => (
@@ -211,11 +265,15 @@ export default function CaptchaCanvas({ slug }: Props) {
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
-                                    // --- 添加这一行 ---
                                     style={{ zIndex: 100 }}
                                 >
                                     <FiXCircle size={80} color="var(--error-color)" />
                                     <span style={{ color: 'var(--error-color)', marginTop: 10, fontWeight: 'bold' }}>FAILED</span>
+                                    {correctAnswers.length > 0 && (
+                                        <span style={{ fontSize: '0.9rem', color: '#fff', marginTop: 5, opacity: 0.8 }}>
+                                            正确答案如绿色框所示
+                                        </span>
+                                    )}
                                 </motion.div>
                             )}
                         </AnimatePresence>

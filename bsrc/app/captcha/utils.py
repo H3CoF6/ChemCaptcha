@@ -142,9 +142,9 @@ def base_verify(user_input: Any, answer_data: list):
         return False
 
 
-def aes_cbc_encrypt(text: str, key: str) -> str:
+def aes_cbc_encrypt(text: str, key: bytes) -> str:
     """AES加密"""
-    key_bytes = key.encode('utf-8')
+    key_bytes = key
     data_bytes = text.encode('utf-8')
     iv = get_random_bytes(16)
 
@@ -154,9 +154,9 @@ def aes_cbc_encrypt(text: str, key: str) -> str:
     return base64.b64encode(iv + ciphertext).decode('utf-8')
 
 
-def aes_cbc_decrypt(encrypted_text: str, key: str) -> str:
+def aes_cbc_decrypt(encrypted_text: str, key: bytes) -> str:
     """AES解密"""
-    key_bytes = key.encode('utf-8')
+    key_bytes = key
     combined_data = base64.b64decode(encrypted_text)
     iv = combined_data[:16]
     ciphertext = combined_data[16:]
@@ -204,3 +204,4 @@ def generate_answer_coords(mol: Chem.Mol, width: int, height: int, target_smarts
             valid_polygons.append(polygon)
 
     return valid_polygons
+

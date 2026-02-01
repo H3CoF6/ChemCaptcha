@@ -1,5 +1,6 @@
 import random
 import json
+import time
 from typing import Any
 from fastapi import APIRouter, HTTPException
 from app.captcha.plugins import PLUGINS
@@ -7,17 +8,14 @@ from app.utils import config
 from app.web.schemas import CaptchaGenerateResponse
 from app.web.security import create_captcha_token, parse_captcha_token
 from app.captcha.utils import aes_cbc_encrypt, aes_cbc_decrypt
-from app.utils.config import AES_KEY
+from app.utils.config import FRONT_AES_KEY
+from app.utils.config import DEFAULT_WIDTH, DEFAULT_HEIGHT
 from app.utils.logger import logger
 from app.utils.database import get_mol_by_page, get_table_count
 from pydantic import BaseModel
 import traceback
 
 router = APIRouter()
-
-DEFAULT_WIDTH = 400
-DEFAULT_HEIGHT = 300
-
 
 
 class EncryptedPayload(BaseModel):
@@ -27,10 +25,15 @@ class EncryptedPayload(BaseModel):
 def captcha_util(s: str, plugin_class: Any, width: int, height: int, path = "") -> Any:
     captcha = plugin_class(width=width, height=height, runtime=True, mol_path=path)
     img_data = captcha.generate_img()
-    answer = captcha.generate_answer()
+    # answer = captcha.generate_answer()  #  gemini不知道为什么想的要这样写？？
+
+    path = getattr(captcha, 'mol_path')  # 我不该用getattr的！！ 我忏悔  [哭]
     desc = captcha.generate_read_output()
 
-    token = create_captcha_token(s, answer)
+    smart = getattr(captcha, 'target_smarts', "")
+
+
+    token = create_captcha_token(s, path, width, height, smart)
 
     return img_data, token, desc
 
@@ -71,35 +74,54 @@ def _verify_logic(encrypted_data: str) -> dict:
     3. 返回加密后的结果
     """
     try:
-        json_str = aes_cbc_decrypt(encrypted_data, AES_KEY)
+        json_str = aes_cbc_decrypt(encrypted_data, FRONT_AES_KEY)
         payload = json.loads(json_str)
 
-        token = payload.get("token")
+        token = payload.get("token")   # 里面已经没有答案了
         user_input = payload.get("user_input")
 
         token_data = parse_captcha_token(token)
-        if not token_data:
-            return {"success": False, "message": "Token expired or invalid"}
+
+        if not token_data or not token_data.get("p"):
+            return {"success": False, "message": "Token invalid"}
+
+        if int(time.time() - token_data.get("t") > config.EXPIRED_TIME):
+            return {"success": False, "message": "Token expired"}
 
         slug_name = token_data.get("s")
-        answer_data = token_data.get("a")
+        # answer_data = token_data.get("a")
 
         if slug_name not in PLUGINS:
             return {"success": False, "message": "Unknown captcha type"}
 
+
         plugin_class = PLUGINS[slug_name]
-        captcha = plugin_class(DEFAULT_WIDTH, DEFAULT_HEIGHT, runtime=False)
+        captcha = plugin_class(token_data.get("w"), token_data.get("h"), mol_path=token_data.get("p"))
+
+        if token_data.get("sm"):  # 可选项不为空
+            captcha.target_smarts = token_data.get("sm")
+            # print(captcha.target_smarts)  # debug !!!
+
+        answer_data = captcha.generate_answer()
+
         is_valid = captcha.verify(answer_data, user_input)
+
         logger.info(f"answer: {answer_data}")
         logger.info(f"user_input: {user_input}")
 
+        # 加入正确答案的返回！！
         if is_valid:
+            if config.DEV_MOD:
+                return {"success": True, "message": "Verification passed", "answer": answer_data}
             return {"success": True, "message": "Verification passed"}
         else:
+            if config.DEV_MOD:
+                return {"success": False, "message": "Verification failed", "answer": answer_data}
             return {"success": False, "message": "Verification failed"}
 
     except Exception as e:
         logger.error(f"Decryption/Verify error: {e}")
+        traceback.print_exc()
         return {"success": False, "message": "Security check failed"}
 
 
@@ -182,6 +204,6 @@ async def verify_encrypted(payload: EncryptedPayload):
 
     # 加密响应
     result_json = json.dumps(result_dict)
-    encrypted_response = aes_cbc_encrypt(result_json, AES_KEY)
+    encrypted_response = aes_cbc_encrypt(result_json, FRONT_AES_KEY)
 
     return {"data": encrypted_response}

@@ -102,9 +102,13 @@
 .resultOverlay {
   position: absolute;
   inset: 0;
-  /* --- 修复：结果遮罩层稍微调亮一点在浅色模式下 --- */
-  background: rgba(0,0,0,0.6);
-  backdrop-filter: blur(5px);
+
+  /* 关键修改：降低不透明度，让用户能看清底下的正确答案 */
+  background: rgba(0, 0, 0, 0.5);
+
+  /* 关键修改：减少模糊度，或者直接去掉，否则绿框是糊的 */
+  backdrop-filter: blur(0.5px);
+
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -112,6 +116,8 @@
   gap: 10px;
   font-size: 1.5rem;
   font-weight: bold;
+
+  z-index: 100; /* 保持在最上层显示 FAILED 文字 */
 }
 
 .loader {
@@ -239,4 +245,35 @@
   gap: 15px;
   font-size: 0.9rem;
   color: var(--text-primary);
+}
+
+.answerLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* 让鼠标事件穿透，不阻挡操作 */
+  z-index: 50; /* 层级：图片(0) < Marker(10) < Answer(50) < ResultOverlay(100) */
+}
+
+.answerGroup {
+  /* 每一个答案组 */
+}
+
+.answerPolygon {
+  fill: rgba(0, 204, 136, 0.2); /* 绿色半透明填充 */
+  stroke: var(--success-color);  /* 绿色描边 */
+  stroke-width: 2;
+  stroke-dasharray: 6 4; /* 虚线效果，醒目 */
+  vector-effect: non-scaling-stroke; /* 防止缩放时线条变粗（可选） */
+  filter: drop-shadow(0 0 2px var(--success-color)); /* 增加一点发光感 */
+}
+
+.answerIndex {
+  fill: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  pointer-events: none;
 }
